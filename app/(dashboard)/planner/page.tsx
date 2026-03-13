@@ -106,7 +106,7 @@ export default function PlannerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-10">
+    <div className="min-h-screen bg-[#FAFAF8] pb-10">
       {/* Breadcrumb */}
       <div className="pt-8">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 text-sm text-slate-500">
@@ -124,24 +124,24 @@ export default function PlannerPage() {
 
       {/* Hero heading */}
       <section className="mx-auto mt-8 mb-10 max-w-3xl px-6 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#4F46E5] shadow-sm">
           <Sparkles className="h-6 w-6 animate-pulse" />
         </div>
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-[#111111] sm:text-5xl">
           Plan Your Perfect Trip
         </h1>
-        <p className="mt-3 text-base text-slate-500 sm:text-lg">
+        <p className="mt-3 text-base text-[#6B7280] sm:text-lg">
           Describe your dream trip in plain English — our AI handles the rest.
         </p>
       </section>
 
       {/* Main form card */}
       <section className="mx-auto max-w-3xl px-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="rounded-3xl border border-[#E8E8E2] bg-white p-6 shadow-sm sm:p-8">
           {/* Section 1: Describe trip */}
           <div>
-            <label className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-600">
-              <MessageSquare className="h-4 w-4 text-indigo-500" />
+            <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#374151]">
+              <MessageSquare className="h-4 w-4 text-[#4F46E5]" />
               <span>Tell AI about your trip</span>
             </label>
             <textarea
@@ -154,7 +154,7 @@ export default function PlannerPage() {
                 "budget around ₹30,000 for 2 people in March.\n" +
                 "I love sunset views and authentic local food."
               }
-              className="min-h-[140px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50"
+              className="tm-input min-h-[140px] resize-none rounded-2xl p-4 leading-relaxed"
             />
 
             <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -188,7 +188,7 @@ export default function PlannerPage() {
             </div>
           </div>
 
-          <div className="my-6 border-t border-slate-200" />
+          <div className="my-6 border-t border-[#E8E8E2]" />
 
           {/* Section 2: Trip preferences */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
