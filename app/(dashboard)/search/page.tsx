@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Search, 
-  SlidersHorizontal, 
-  LayoutGrid, 
-  List, 
-  ChevronDown 
-} from "lucide-react";
+import { Search, SlidersHorizontal, LayoutGrid, List, ChevronDown } from "lucide-react";
 import { ActivityCard } from "@/components/cards/ActivityCard";
 import { goaActivities } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
@@ -29,23 +23,16 @@ export default function SearchPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  
-  const [wishlist, setWishlist] = useState<Set<string>>(new Set());
 
   const handleWishlistToggle = (activityId: string, isWishlisted: boolean) => {
-    setWishlist(prev => {
-      const next = new Set(prev);
-      if (isWishlisted) {
-        next.add(activityId);
-        toast.success("Added to wishlist", {
-          description: "Item saved to your trip wishlist."
-        });
-      } else {
-        next.delete(activityId);
-        toast.info("Removed from wishlist");
-      }
-      return next;
-    });
+    if (isWishlisted) {
+      toast.success("Added to wishlist", {
+        description: "Item saved to your trip wishlist."
+      });
+      return;
+    }
+
+    toast.info("Removed from wishlist");
   };
 
   const handleAddToTrip = () => {
@@ -53,27 +40,27 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-12">
+    <div className="min-h-screen bg-[#FAFAF8] pb-12">
       {/* PAGE HEADER */}
-      <div className="px-6 pt-8">
-        <h1 className="text-3xl font-bold text-slate-900">Explore Activities</h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="px-6 pt-8 lg:px-12">
+        <h1 className="font-display text-5xl font-bold text-[#111111]">Explore Activities</h1>
+        <p className="mt-2 text-sm text-[#6B7280]">
           Discover verified hotels, experiences and events
         </p>
       </div>
 
       {/* SEARCH BAR */}
-      <div className="relative mt-6 max-w-2xl px-6">
-        <div className="relative flex items-center">
+      <div className="relative mt-6 max-w-3xl px-6 lg:px-12">
+        <div className="tm-search-shell relative flex items-center p-2">
           <Search className="absolute left-10 size-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search destinations, hotels, activities..."
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-12 pr-28 text-sm text-slate-900 shadow-sm transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+            className="w-full rounded-xl border-0 bg-transparent py-3.5 pl-12 pr-28 text-sm text-[#111111] shadow-none placeholder:text-[#9CA3AF] focus:outline-none"
           />
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+            className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-xl bg-[#F7F7F4] px-3 py-1.5 text-xs font-medium text-[#374151] transition-colors hover:bg-[#EEF2FF] hover:text-[#4338CA]"
           >
             <SlidersHorizontal className="size-3.5" />
             <span>Filters</span>
@@ -85,18 +72,19 @@ export default function SearchPage() {
       </div>
 
       {/* FILTER BAR */}
-      <div className="mt-4 px-6">
+      <div className="mt-4 px-6 lg:px-12">
         <div className="flex items-center gap-4 overflow-x-auto pb-2 pt-1 scrollbar-hide">
           <div className="flex shrink-0 gap-2">
             {CATEGORIES.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
+                data-active={activeCategory === category}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                  "tm-tab whitespace-nowrap rounded-none border-x-0 border-t-0 px-2 py-2",
                   activeCategory === category
-                    ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
-                    : "border-slate-200 bg-transparent text-slate-600 hover:border-indigo-300 hover:bg-slate-50"
+                    ? "border-b-[#4F46E5] text-[#111111]"
+                    : "text-[#6B7280]"
                 )}
               >
                 {category}
@@ -108,7 +96,7 @@ export default function SearchPage() {
 
           <div className="flex shrink-0 gap-3">
             <Select defaultValue="any-price">
-              <SelectTrigger className="h-9 w-35 rounded-xl border-slate-200 bg-white text-sm">
+              <SelectTrigger className="h-9 w-35 rounded-xl border-[#E8E8E2] bg-white text-sm">
                 <SelectValue placeholder="Price" />
               </SelectTrigger>
               <SelectContent>
@@ -120,7 +108,7 @@ export default function SearchPage() {
             </Select>
 
             <Select defaultValue="any-rating">
-              <SelectTrigger className="h-9 w-[130px] rounded-xl border-slate-200 bg-white text-sm">
+              <SelectTrigger className="h-9 w-[130px] rounded-xl border-[#E8E8E2] bg-white text-sm">
                 <SelectValue placeholder="Rating" />
               </SelectTrigger>
               <SelectContent>
@@ -131,7 +119,7 @@ export default function SearchPage() {
             </Select>
 
             <Select defaultValue="relevance">
-              <SelectTrigger className="h-9 w-40 rounded-xl border-slate-200 bg-white text-sm">
+              <SelectTrigger className="h-9 w-40 rounded-xl border-[#E8E8E2] bg-white text-sm">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
@@ -146,11 +134,11 @@ export default function SearchPage() {
       </div>
 
       {/* RESULTS HEADER */}
-      <div className="mt-6 flex items-center justify-between px-6">
-        <p className="text-sm font-medium text-slate-500">
+      <div className="mt-8 flex items-center justify-between px-6 lg:px-12">
+        <p className="text-sm font-medium text-[#6B7280]">
           Showing 12 results for Goa
         </p>
-        <div className="flex items-center gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+        <div className="flex items-center gap-1 overflow-hidden rounded-lg border border-[#E8E8E2] bg-white p-1 shadow-sm">
           <button
             onClick={() => setViewMode("grid")}
             className={cn(
@@ -180,7 +168,7 @@ export default function SearchPage() {
 
       {/* RESULTS GRID */}
       <div className={cn(
-        "mt-4 px-6",
+        "mt-4 px-6 lg:px-12",
         viewMode === "grid"
           ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           : "flex flex-col gap-4"
@@ -197,7 +185,7 @@ export default function SearchPage() {
       </div>
 
       {/* LOAD MORE BUTTON */}
-      <button className="mx-auto mt-8 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-8 py-3 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-indigo-300 hover:text-indigo-600">
+      <button className="tm-btn-outline mx-auto mt-8 flex items-center gap-2 px-8 py-3">
         Load more results
         <ChevronDown className="size-4" />
       </button>

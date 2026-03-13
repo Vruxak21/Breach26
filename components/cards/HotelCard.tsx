@@ -25,8 +25,8 @@ export function HotelCard({ hotel, onWishlistToggle }: HotelCardProps) {
   };
 
   return (
-    <div className="flex w-72 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100">
-      <div className="relative h-44">
+    <div className="tm-card flex w-72 shrink-0 flex-col">
+      <div className="tm-card-image">
         <Image
           src={hotel.images[0] ?? ""}
           alt={hotel.name}
@@ -61,11 +61,11 @@ export function HotelCard({ hotel, onWishlistToggle }: HotelCardProps) {
 
       <div className="flex flex-1 flex-col p-4">
         <div>
-          <h3 className="line-clamp-1 text-sm font-semibold text-slate-900">
+          <h3 className="line-clamp-1 text-base font-semibold text-[#111111]">
             {hotel.name}
           </h3>
-          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+          <div className="mt-1 flex items-center gap-1.5 text-[13px] text-[#6B7280]">
+            <MapPin className="h-3.5 w-3.5 text-[#9CA3AF]" />
             <span>
               {hotel.city}, {hotel.country}
             </span>
@@ -76,7 +76,7 @@ export function HotelCard({ hotel, onWishlistToggle }: HotelCardProps) {
           {hotel.amenities.slice(0, 3).map((amenity) => (
             <span
               key={amenity}
-              className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
+              className="rounded-full bg-[#F7F7F4] px-2 py-0.5 text-[11px] text-[#6B7280]"
             >
               {amenity}
             </span>
@@ -84,15 +84,15 @@ export function HotelCard({ hotel, onWishlistToggle }: HotelCardProps) {
         </div>
 
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-xl font-semibold text-slate-900">
+          <span className="text-xl font-bold text-[#111111]">
             {formatCurrency(hotel.pricePerNight, hotel.currency)}
           </span>
-          <span className="text-xs text-slate-500">/ night</span>
+          <span className="text-[13px] text-[#6B7280]">per night</span>
         </div>
 
         <button
           type="button"
-          className="mt-3 w-full rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
+          className="tm-btn-secondary mt-3 w-full px-3 py-2"
         >
           Book Now
         </button>

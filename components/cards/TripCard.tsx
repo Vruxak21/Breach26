@@ -49,9 +49,9 @@ export function TripCard({ trip }: TripCardProps) {
   return (
     <Link 
       href={`/itinerary/${trip.id}/view`}
-      className="block flex w-72 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
+      className="tm-card block flex w-72 shrink-0 cursor-pointer flex-col"
     >
-      <div className="relative h-40">
+      <div className="tm-card-image">
         <Image
           src={trip.coverImage}
           alt={trip.title}
@@ -102,13 +102,13 @@ export function TripCard({ trip }: TripCardProps) {
 
       <div className="flex flex-1 flex-col p-4">
         <div>
-          <h3 className="line-clamp-1 text-lg font-semibold text-slate-900">
+          <h3 className="line-clamp-1 text-lg font-semibold text-[#111111]">
             {trip.destination}{" "}
-            <span className="text-base font-normal text-slate-500">
+            <span className="text-base font-normal text-[#6B7280]">
               · {trip.country}
             </span>
           </h3>
-          <p className="mt-0.5 line-clamp-1 text-sm text-slate-500">
+          <p className="mt-0.5 line-clamp-1 text-sm text-[#6B7280]">
             {trip.title}
           </p>
         </div>
@@ -144,9 +144,7 @@ export function TripCard({ trip }: TripCardProps) {
           </div>
         )}
 
-        <div
-          className="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-900 transition hover:border-indigo-300 hover:bg-indigo-50 text-center block"
-        >
+        <div className="tm-btn-outline mt-3 w-full px-3 py-2 text-center">
           View Trip
         </div>
       </div>

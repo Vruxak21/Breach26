@@ -14,16 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-interface PageProps {
-  params: { id: string };
-}
-
-export default function ViewItineraryPage({ params }: PageProps) {
+export default function ViewItineraryPage() {
   const trip = sampleTrips[0];
   const spent = trip.days.reduce((acc, day) => acc + day.totalCost, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-[#FAFAF8] pb-24">
       {/* HERO */}
       <div className="relative h-64 overflow-hidden rounded-b-3xl">
         <Image 
@@ -37,7 +33,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
         
         <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
           <div className="text-white">
-            <h1 className="text-3xl font-bold">{trip.title}</h1>
+            <h1 className="font-display text-4xl font-bold">{trip.title}</h1>
             <p className="mt-2 flex items-center gap-2 text-sm text-slate-200">
               <MapPin className="size-4" />
               {trip.destination}, {trip.country}
@@ -49,7 +45,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
               <UserPlus className="size-4" />
               Collaborate
             </Link>
-            <Link href={`/itinerary/${trip.id}/build`} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700 shadow-sm">
+            <Link href={`/itinerary/${trip.id}/build`} className="tm-btn-primary flex items-center gap-2 px-4 py-2">
               <Calendar className="size-4" />
               Edit Itinerary
             </Link>
@@ -65,11 +61,11 @@ export default function ViewItineraryPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="mx-auto mt-6 grid max-w-7xl grid-cols-1 gap-6 px-6 lg:grid-cols-5">
+      <div className="mx-auto mt-6 grid max-w-7xl grid-cols-1 gap-6 px-6 lg:grid-cols-5 lg:px-12">
         
         {/* LEFT COLUMN: Timeline */}
         <div className="lg:col-span-3">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-[#E8E8E2] bg-white p-6 shadow-sm">
              <Timeline days={trip.days} />
           </div>
         </div>
@@ -78,7 +74,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
         <div className="space-y-6 lg:col-span-2">
           
           {/* Map Card */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-[#E8E8E2] bg-white shadow-sm">
             <div className="relative h-72 w-full bg-slate-50 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:16px_16px]">
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
                 <MapPin className="mb-2 size-8 text-indigo-500" />
@@ -97,7 +93,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
           </div>
 
           {/* Expense Summary */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-[#E8E8E2] bg-white p-6 shadow-sm">
             <h3 className="flex items-center gap-2 font-semibold text-slate-900">
               <Receipt className="size-5 text-slate-500" />
               Expense Summary
@@ -157,7 +153,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
           </div>
 
           {/* Trip Info Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-[#E8E8E2] bg-white p-6 shadow-sm">
              <h3 className="font-semibold text-slate-900 mb-4">Trip Details</h3>
              <ul className="space-y-3 text-sm">
                <li className="flex justify-between">
@@ -178,7 +174,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
       </div>
 
       {/* BOTTOM STICKY BAR */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 flex items-center justify-between border-t border-slate-200 bg-white/90 px-6 py-4 backdrop-blur-md shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-[#E8E8E2] bg-white/90 px-6 py-4 backdrop-blur-md shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] md:left-64 lg:px-12">
         <div className="hidden sm:block text-sm font-medium text-slate-700">
           {trip.destination} • {trip.totalDays} days • {formatCurrency(spent, trip.currency)}
         </div>
@@ -186,7 +182,7 @@ export default function ViewItineraryPage({ params }: PageProps) {
           <button className="rounded-xl border border-slate-200 bg-white px-4 md:px-6 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300">
             Export PDF
           </button>
-          <button className="rounded-xl bg-indigo-600 px-4 md:px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 hover:shadow">
+          <button className="tm-btn-primary px-4 py-2.5 md:px-6">
             Book Hotels
           </button>
         </div>
