@@ -10,7 +10,7 @@ export const getDbPool = (): Pool => {
     }
 
     pool = new Pool({
-      connectionString: connectionString || 'postgres://user:pass@localhost:5432/travelmind',
+      connectionString: connectionString,
     });
   }
 

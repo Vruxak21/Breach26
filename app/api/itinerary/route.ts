@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { tripIntentSchema } from "@/lib/validations";
 import { generateShareToken } from "@/lib/utils";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export async function POST(request: NextRequest) {
   try {
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         );
 
         // Store extracted preferences in Pinecone for future trips
-        await storeUserPreferences(session.user.id, extractedPrefs, "itinerary-creation").catch(() => {});
+        await storeUserPreferences(session.user.id, extractedPrefs, "itinerary-creation").catch(() => { });
 
         userPrefsString = preferencesToPromptString(extractedPrefs);
       }
@@ -275,7 +275,7 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's
         travelers: intent.travelers || 2,
         days,
       }).catch((e) => console.error("Dynamic ingestion error (non-fatal):", e));
-    } catch {}
+    } catch { }
 
     return NextResponse.json({
       ...itinerary,

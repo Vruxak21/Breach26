@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     console.log(`✅ User ${userId} activated ${plan} plan via checkout success callback`);
 
     // Redirect to dashboard with success indicator
-    const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+    const baseUrl = process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
     return NextResponse.redirect(new URL(`/dashboard?plan_activated=${plan}`, baseUrl));
   } catch (error) {
     console.error("Checkout success error:", error);
