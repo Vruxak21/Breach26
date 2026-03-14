@@ -1,10 +1,10 @@
 <h1 align="center">
-  <span style="color:#2563EB;">TravelMind</span>
+  <img src="https://img.shields.io/badge/TravelMind-AI%20Travel%20Platform-2563EB?style=for-the-badge"/>
 </h1>
 
 <p align="center">
 <strong>Intelligent AI Travel Planning Platform</strong><br>
-A modern platform for discovering destinations, generating AI-powered itineraries, and collaborating on trips in real time.
+Discover destinations, generate AI-powered itineraries, and collaborate on trips seamlessly.
 </p>
 
 <hr/>
@@ -12,58 +12,32 @@ A modern platform for discovering destinations, generating AI-powered itinerarie
 <h2>Overview</h2>
 
 <p>
-<strong style="color:#2563EB;">TravelMind</strong> is an advanced AI-powered travel planning platform designed to transform how travelers discover destinations, organize itineraries, and collaborate on trips. Built using a modern full-stack architecture, the platform provides a seamless experience from initial inspiration to structured trip planning.
+<strong>TravelMind</strong> is an AI-powered travel planning platform that helps users discover destinations, generate smart itineraries, and plan trips collaboratively. 
 </p>
 
 <p>
-By integrating <strong>Retrieval-Augmented Generation (RAG)</strong> and intelligent recommendation systems, TravelMind converts static travel data into dynamic, context-aware insights tailored to each user's preferences, interests, and travel patterns.
+Using <strong>Retrieval-Augmented Generation (RAG)</strong> and personalized recommendation systems, the platform transforms travel data into contextual insights tailored to each traveler.
 </p>
 
 <hr/>
 
 <h2>Key Capabilities</h2>
 
-<table>
-<tr>
-<td width="50%">
-
-<strong style="color:#2563EB;">AI-Driven Discovery</strong><br>
-RAG-based intelligence surfaces contextual travel insights and destination recommendations.
-
-</td>
-<td width="50%">
-
-<strong style="color:#10B981;">Personalized Recommendations</strong><br>
-Adaptive algorithms suggest destinations and experiences aligned with user interests.
-
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-<strong style="color:#F59E0B;">Smart Itinerary Generation</strong><br>
-Automatically generates structured travel plans with optimized activities and locations.
-
-</td>
-<td width="50%">
-
-<strong style="color:#8B5CF6;">Collaborative Planning</strong><br>
-Users can build and manage trips together using shared itineraries and planning tools.
-
-</td>
-</tr>
-
-</table>
+<ul>
+<li><strong>AI-Powered Discovery</strong> — Context-aware destination insights using RAG.</li>
+<li><strong>Personalized Recommendations</strong> — Adaptive suggestions based on user preferences.</li>
+<li><strong>Smart Itinerary Generation</strong> — Automatically structured travel plans.</li>
+<li><strong>Collaborative Planning</strong> — Shared trip planning with friends.</li>
+<li><strong>Scalable Architecture</strong> — Built with modern full-stack and AI infrastructure.</li>
+</ul>
 
 <hr/>
 
 <h2>Vision</h2>
 
 <p>
-<strong style="color:#2563EB;">TravelMind</strong> aims to redefine travel planning by turning traditional search into an intelligent, AI-assisted experience. The platform acts as a digital travel companion that helps users explore destinations, organize trips efficiently, and discover unique travel opportunities tailored specifically to them.
+TravelMind aims to transform traditional travel search into an intelligent planning experience where AI acts as a personalized travel assistant.
 </p>
-
 ---
 
 # Table of Contents
