@@ -38,12 +38,12 @@ Using <strong>Retrieval-Augmented Generation (RAG)</strong> and personalized rec
 <p>
 TravelMind aims to transform traditional travel search into an intelligent planning experience where AI acts as a personalized travel assistant.
 </p>
+
 ---
 
 # Table of Contents
 
-* [Overview](#overview)
-* [Features](#features)
+* [Team Details](#team-details)
 * [Technology Stack](#technology-stack)
 * [Entity Relation Diagram](#er-diagram)
 * [Low Fidelity Design](#low-fidelity-design)
@@ -61,52 +61,14 @@ TravelMind aims to transform traditional travel search into an intelligent plann
 
 ---
 
-# Overview
+# Team Details
 
-**Breach26** is a full-stack web application template built to accelerate development of **AI-powered applications**.
-
-The architecture integrates:
-
-* **Next.js App Router**
-* **Secure authentication**
-* **PostgreSQL database with Prisma**
-* **Modern UI system**
-* **Vector embeddings and RAG pipelines**
-
-The goal of this template is to provide a **scalable base architecture** for applications involving:
-
-* AI assistants
-* intelligent search
-* recommendation systems
-* semantic retrieval
-* data-driven personalization
-
----
-
-# Features
-
-### Core Web Stack
-
-* **Next.js 15 (App Router)** – Modern React framework with server components.
-* **Bun Runtime** – Faster dependency installation and runtime performance.
-* **Prisma ORM** – Type-safe database access with migrations.
-* **PostgreSQL** – Reliable relational database.
-* **TailwindCSS** – Utility-first CSS framework.
-* **shadcn/ui** – Beautiful and accessible UI components.
-
-### Authentication
-
-* **Better Auth** – Lightweight authentication framework.
-* Google OAuth login support.
-* Secure session handling.
-* Extensible provider architecture.
-
-### AI Infrastructure
-
-* Retrieval-Augmented Generation (RAG)
-* Embedding pipelines
-* Vector search support
-* AI powered recommendations
+| Name | Role | Email | University |
+|-----|-----|-----|-----|
+| **Vruxak Patel** | Team Leader · Frontend Developer | 23bce252@nirmauni.ac.in | Nirma University |
+| **Hardattsinh Mangrola** | Backend Developer · ML Engineer | hardattmangrola@gmail.com | Nirma University |
+| **Shivang Pandya** | Full Stack Developer | shivangpandya6212@gmail.com | Nirma University |
+| **Bhavya Mishra** | UI/UX Designer · ML Engineer | bhavyamishra2873@gmail.com | Nirma University |
 
 ---
 
