@@ -11,7 +11,8 @@ This template is optimized for **hackathons, rapid prototyping, and production s
 * [Overview](#overview)
 * [Features](#features)
 * [Technology Stack](#technology-stack)
-* [Entity Relation Diagram](#ER Diagram)
+* [Entity Relation Diagram](#er-diagram)
+* [Low Fidelity Design](#low-fidelity-design)
 * [Project Structure](#project-structure)
 * [Getting Started](#getting-started)
 * [Environment Variables](#environment-variables)
@@ -166,6 +167,15 @@ The goal of this template is to provide a **scalable base architecture** for app
 # ER Diagram
 
 ![ER Diagram](https://raw.githubusercontent.com/Vruxak21/Breach26/4f43e137a600c20391696436ed1d2f3c4663c700/assests/er_diagram.png)
+
+# Low Fidelity Design
+
+During the brainstorming phase, we mapped the complete user journey and created **low-fidelity wireframes** on Figma to validate the product flow before starting development. After multiple iterations, we finalized **11 core screens** covering authentication, dashboard, trip planning, collaboration, AI planning, and wishlist.
+
+ **View our Low Fidelity Design**  
+[Click here to open the wireframes](https://www.figma.com/design/B44n2qMVdnGPGfohEjHC36/TravelMind?node-id=0-1&t=3Blvbj3Lz5svvmJu-1)
+
+These wireframes helped us quickly validate **navigation flow, feature placement, and overall user experience** before moving to high-fidelity UI and implementation.
 # Project Structure
 
 ```
@@ -412,7 +422,9 @@ https://ieeexplore.ieee.org/document/1708607
 
 **Hybrid Formula**
 
-$\hat{R}_{ui} = \alpha R_{ui}^{CF} + (1-\alpha) R_{ui}^{CB}$
+$$
+\hat{R}_{ui} = \alpha R_{ui}^{CF} + (1-\alpha) R_{ui}^{CB}
+$$
 
 Where:
 
