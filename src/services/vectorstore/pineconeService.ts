@@ -39,18 +39,22 @@ export class PineconeService {
     }
   }
 
-  public async storeDocuments(docs: Document[], embeddings: Embeddings) {
+  public async storeDocuments(docs: Document[], embeddings: Embeddings, namespace?: string) {
     const pineconeIndex = this.client.Index(this.indexName);
     
     // Upload documents and their embeddings efficiently into Pinecone
     await PineconeStore.fromDocuments(docs, embeddings, {
       pineconeIndex,
       maxConcurrency: 5,
+      ...(namespace ? { namespace } : {}),
     });
   }
 
-  public async getStore(embeddings: Embeddings): Promise<PineconeStore> {
+  public async getStore(embeddings: Embeddings, namespace?: string): Promise<PineconeStore> {
     const pineconeIndex = this.client.Index(this.indexName);
-    return await PineconeStore.fromExistingIndex(embeddings, { pineconeIndex });
+    return await PineconeStore.fromExistingIndex(embeddings, {
+      pineconeIndex,
+      ...(namespace ? { namespace } : {}),
+    });
   }
 }

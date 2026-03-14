@@ -32,6 +32,8 @@ model User {
   polls                Poll[]
   votes                Vote[]
   activities           Activity[]
+  interactions         UserInteraction[]
+  preferences          UserPreference[]
 
   @@unique([email])
   @@map("user")
@@ -276,4 +278,36 @@ model Activity {
 
   @@index([itineraryId])
   @@map("activity")
+}
+
+model UserInteraction {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId    String
+  itemType  String   // "activity" | "place" | "itinerary" | "poll_option"
+  action    String   // "view" | "click" | "favorite" | "rate" | "vote"
+  score     Float?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([itemId])
+  @@map("user_interaction")
+}
+
+model UserPreference {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String   // "specificPlaces" | "cuisine" | "timing" | "budget" | "activity" | "avoidance" | "special"
+  value       String
+  source      String   // "questionnaire" | "chat" | "prompt" | "interaction"
+  confidence  Float    @default(1.0)
+  itineraryId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_preference")
 }

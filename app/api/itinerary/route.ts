@@ -52,19 +52,53 @@ export async function POST(request: NextRequest) {
     const currency = currencyRes.status === "fulfilled" && currencyRes.value.ok
       ? await currencyRes.value.json() : { rate: 1 };
 
-    // Step 3: Try to get RAG recommendations
-    let ragRecommendation = "";
+    // Step 3: Extract user preferences from description
+    let userPrefsString = "";
+    try {
+      const { extractPreferences, preferencesToPromptString } = await import("@/lib/preference-extractor");
+      const { storeUserPreferences, getUserPreferences } = await import("@/lib/preference-store");
+
+      // Extract preferences from the user's free-text description
+      if (intent.description) {
+        const extractedPrefs = await extractPreferences(
+          `Trip to ${intent.destination}. ${intent.description}. Interests: ${intent.interests?.join(", ") || "general"}. Style: ${intent.travelStyle || "relaxed"}.`
+        );
+
+        // Store extracted preferences in Pinecone for future trips
+        await storeUserPreferences(session.user.id, extractedPrefs, "itinerary-creation").catch(() => {});
+
+        userPrefsString = preferencesToPromptString(extractedPrefs);
+      }
+
+      // Also retrieve any previously stored preferences for this user
+      const storedPrefs = await getUserPreferences(
+        session.user.id,
+        `Travel to ${intent.destination}`
+      ).catch(() => "");
+
+      if (storedPrefs) {
+        userPrefsString = userPrefsString
+          ? `${userPrefsString}\n${storedPrefs}`
+          : storedPrefs;
+      }
+    } catch (e) {
+      console.error("Preference extraction error (non-fatal):", e);
+    }
+
+    // Step 4: Get RAG knowledge context
+    let ragContext = "";
     try {
       const ragRes = await fetch(`${BASE_URL}/api/rag`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: `Travel to ${intent.destination}: ${intent.description}. Interests: ${intent.interests?.join(", ") || "general"}. Budget: ${intent.budget}. Style: ${intent.travelStyle || "relaxed"}`,
+          query: `Travel to ${intent.destination}: ${intent.description || ""}. Interests: ${intent.interests?.join(", ") || "general"}. Budget: ${intent.budget}. Style: ${intent.travelStyle || "relaxed"}`,
+          userId: session.user.id,
         }),
       });
       if (ragRes.ok) {
         const ragData = await ragRes.json();
-        ragRecommendation = ragData.answer || "";
+        ragContext = ragData.answer || "";
       }
     } catch {
       // RAG is optional — continue without it
@@ -74,17 +108,17 @@ export async function POST(request: NextRequest) {
       (new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000
     ) + 1);
 
-    // Step 4: Build a LEAN prompt (minimize tokens to avoid 429)
-    const topPlaces = places.slice(0, 5).map((p: any) => p.name).join(", ");
-    const ragSnippet = ragRecommendation.slice(0, 300);
+    // Step 5: Build enriched prompt with full context
+    const topPlaces = places.slice(0, 8).map((p: any) => `${p.name} (${p.category})`).join(", ");
 
     const prompt = `Generate a ${totalDays}-day itinerary for ${intent.destination} (${startDate} to ${endDate}).
 Budget: ${intent.budget || 50000} ${intent.currency || "INR"}, ${intent.travelers || 2} travelers, ${intent.travelStyle || "relaxed"} style.
-${intent.description ? `Notes: ${intent.description.slice(0, 100)}` : ""}
-${topPlaces ? `Places nearby: ${topPlaces}` : ""}
-${ragSnippet ? `Tips: ${ragSnippet}` : ""}
+${intent.description ? `User Notes: ${intent.description}` : ""}
+${topPlaces ? `Nearby places of interest: ${topPlaces}` : ""}
+${userPrefsString ? `\nUser Preferences (PRIORITIZE THESE):\n${userPrefsString}` : ""}
+${ragContext ? `\nTravel Knowledge & Recommendations:\n${ragContext.slice(0, 600)}` : ""}
 Return ONLY a JSON array. Each element: {"day":1,"date":"YYYY-MM-DD","title":"...","activities":[{"name":"...","description":"...","time":"HH:MM","duration":60,"category":"culture","estimatedCost":500,"lat":0.0,"lng":0.0}]}
-Include 3-4 activities per day. Mix sightseeing, food, leisure.`;
+Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's preferences above all else.`;
 
     // Use Google Generative AI SDK directly (no LangChain overhead)
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
@@ -153,6 +187,22 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure.`;
         status: "draft",
       },
     });
+    // Step 7: Auto-ingest the new trip into Pinecone for future RAG enrichment
+    try {
+      const { ingestItinerary } = await import("@/lib/dynamic-ingestion");
+      // Fire-and-forget: don't block the response
+      ingestItinerary({
+        id: itinerary.id,
+        destination: intent.destination,
+        country: cityInfo.country || location.displayName?.split(",").pop()?.trim() || "",
+        totalDays,
+        travelStyle: intent.travelStyle || "relaxed",
+        totalBudget: intent.budget || 50000,
+        currency: intent.currency || "INR",
+        travelers: intent.travelers || 2,
+        days,
+      }).catch((e) => console.error("Dynamic ingestion error (non-fatal):", e));
+    } catch {}
 
     return NextResponse.json({
       ...itinerary,
