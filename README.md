@@ -333,17 +333,15 @@ https://ieeexplore.ieee.org/document/1708607
 - Uses a **weighted hybrid recommendation model**.
 - Improves recommendation accuracy by leveraging both user interactions and item features.
 
-Hybrid formula:
+**Hybrid Formula**
 
-\[
-\hat{R}_{ui} = \alpha R_{ui}^{CF} + (1-\alpha) R_{ui}^{CB}
-\]
+$\hat{R}_{ui} = \alpha R_{ui}^{CF} + (1-\alpha) R_{ui}^{CB}$
 
 Where:
 
-- \(R_{ui}^{CF}\) = collaborative filtering prediction  
-- \(R_{ui}^{CB}\) = content-based prediction  
-- \(\alpha\) = weighting factor
+- $R_{ui}^{CF}$ = collaborative filtering prediction  
+- $R_{ui}^{CB}$ = content-based prediction  
+- $\alpha$ = weighting factor controlling contribution
 
 ### Challenges Addressed
 - Cold start problem
@@ -394,10 +392,9 @@ Common ML techniques used in surveyed systems:
 - Association rule mining
 
 Example similarity metric:
-
-\[
+$\displaystyle
 sim(i,j)=\frac{\sum r_{ui}r_{uj}}{\sqrt{\sum r_{ui}^2}\sqrt{\sum r_{uj}^2}}
-\]
+$
 
 ### Rationale
 This paper provides the **taxonomy and justification for selecting hybrid architectures** for large-scale recommendation systems like our travel platform.
@@ -440,17 +437,17 @@ Final recommendation
 
 ### Mathematical Components
 
-Cosine similarity:
+**Cosine similarity**
 
-\[
-sim(i,j)=\frac{i \cdot j}{||i|| ||j||}
-\]
+$\displaystyle
+sim(i,j)=\frac{i \cdot j}{||i||\,||j||}
+$
 
-Prediction formula:
+**Prediction formula**
 
-\[
-\hat{r}_{ui} = \frac{\sum sim(i,j)r_{uj}}{\sum |sim(i,j)|}
-\]
+$\displaystyle
+\hat{r}_{ui}=\frac{\sum sim(i,j)\,r_{uj}}{\sum |sim(i,j)|}
+$
 
 ### Rationale
 Provides a **framework for designing modular hybrid recommendation architectures**, which informs the system design of our AI travel recommender.
@@ -474,11 +471,9 @@ Keywords extracted using:
 - RAKE algorithm
 
 Item representation:
-
-\[
+$\displaystyle
 w_i = tf_i \cdot \log\left(\frac{N}{df_i}\right)
-\]
-
+$
 ### Challenges Addressed
 - Sparse user ratings
 - Lack of structured item features
@@ -486,19 +481,17 @@ w_i = tf_i \cdot \log\left(\frac{N}{df_i}\right)
 
 ### Mathematical Components
 
-Cosine similarity:
+**Cosine similarity**
 
-\[
-sim(D,P)=\frac{D \cdot P}{||D|| ||j||}
-\]
+$\displaystyle
+sim(D,P)=\frac{D \cdot P}{||D||\,||P||}
+$
 
-Collaborative filtering prediction:
+**Collaborative filtering prediction**
 
-\[
-P_{u,i} =
-\frac{\sum sim(i,N)R_{u,N}}
-{\sum |sim(i,N)|}
-\]
+$\displaystyle
+P_{u,i}=\frac{\sum sim(i,N)R_{u,N}}{\sum |sim(i,N)|}
+$
 
 ### Rationale
 Important for systems like ours where **travel reviews, descriptions, and tags must be converted into structured recommendation features**.
@@ -520,11 +513,11 @@ Approach:
 3. Compute feature similarity
 4. Integrate into collaborative filtering
 
-Feature embedding representation:
+**Feature embedding representation**
 
-\[
-v_{item} = \frac{1}{n}\sum_{i=1}^{n} v_{feature_i}
-\]
+$\displaystyle
+v_{item}=\frac{1}{n}\sum_{i=1}^{n} v_{feature_i}
+$
 
 ### Challenges Addressed
 - Cold-start problem
@@ -533,20 +526,19 @@ v_{item} = \frac{1}{n}\sum_{i=1}^{n} v_{feature_i}
 
 ### Mathematical Components
 
-Word2Vec Skip-gram:
+**Word2Vec Skip-gram**
 
-\[
-P(w_o|w_i) =
+$\displaystyle
+P(w_o|w_i)=
 \frac{\exp(v_{w_o} \cdot v_{w_i})}
 {\sum_{w \in V}\exp(v_w \cdot v_{w_i})}
-\]
+$
 
-Similarity:
+**Similarity**
 
-\[
+$\displaystyle
 sim(i,j)=\cos(v_i,v_j)
-\]
-
+$
 ### Rationale
 This paper supports using **embedding-based semantic similarity**, which directly aligns with our **vector database + RAG architecture**.
 
