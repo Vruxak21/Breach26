@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const dep_iata = searchParams.get("dep_iata");
-  const arr_iata = searchParams.get("arr_iata");
+  const dep_iata = searchParams.get("dep");
+  const arr_iata = searchParams.get("arr");
   const date = searchParams.get("date");
 
   if (!dep_iata || !arr_iata) {
     return NextResponse.json(
-      { error: "dep_iata and arr_iata are required" },
+      { error: "dep and arr are required" },
       { status: 400 }
     );
   }

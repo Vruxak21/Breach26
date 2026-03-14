@@ -91,7 +91,7 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure.`;
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
     // Model fallback chain: each model has its OWN quota
-    const modelsToTry = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash-8b"];
+    const modelsToTry = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
     let content = "";
 
     for (const modelName of modelsToTry) {
@@ -155,7 +155,6 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure.`;
     });
 
     return NextResponse.json({
-      id: itinerary.id,
       ...itinerary,
       weather,
       cityInfo,

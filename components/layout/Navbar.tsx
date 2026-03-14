@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Menu, Plane, Search, LogOut } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, Plane, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSession, signOut } from "@/lib/auth-client";
 import {
   Sheet,
   SheetContent,
@@ -17,38 +16,15 @@ import {
 const navItems = [
   { label: "Destinations", href: "/search" },
   { label: "Itineraries", href: "/dashboard" },
-  { label: "Chat", href: "/chat" },
-  { label: "Invitations", href: "/invitations" },
+  { label: "Wishlist", href: "/wishlist" },
   { label: "Planner", href: "/planner" },
 ] as const;
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
 export function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { data: session } = useSession();
-  const isLoggedIn = !!session;
-
-  const handleSignOut = async () => {
-    await signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          window.location.href = "/signin";
-        },
-      },
-    });
-  };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E8E8E2] bg-white/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-[#E8E8E2] bg-white/95 backdrop-blur-md">
       <div className="tm-container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4F46E5]">
@@ -89,34 +65,9 @@ export function Navbar() {
           >
             <Search className="h-4 w-4" />
           </button>
-
-          {isLoggedIn ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-xl border border-[#E8E8E2] px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                {session.user?.image ? (
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name || ""}
-                    className="h-6 w-6 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
-                    {getInitials(session.user?.name || "U")}
-                  </div>
-                )}
-                <span className="max-w-[100px] truncate">
-                  {session.user?.name || "Dashboard"}
-                </span>
-              </Link>
-            </div>
-          ) : (
-            <Link href="/signup" className="tm-btn-primary py-2.5">
-              Sign Up
-            </Link>
-          )}
+          <Link href="/signup" className="tm-btn-primary py-2.5">
+            Sign Up
+          </Link>
         </div>
 
         <Sheet>
@@ -130,7 +81,7 @@ export function Navbar() {
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-3xl border-[#E8E8E2] bg-white p-0" showCloseButton={false}>
-            <SheetHeader className="px-6 pt-6 pb-2 text-left">
+            <SheetHeader className="px-6 pb-2 pt-6 text-left">
               <SheetTitle className="font-display text-2xl">TravelMind</SheetTitle>
               <SheetDescription>Plan your next trip with confidence.</SheetDescription>
             </SheetHeader>
@@ -150,19 +101,9 @@ export function Navbar() {
                   </Link>
                 );
               })}
-              {isLoggedIn ? (
-                <button
-                  onClick={handleSignOut}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </button>
-              ) : (
-                <Link href="/signup" className="tm-btn-primary mt-3 w-full">
-                  Sign Up
-                </Link>
-              )}
+              <Link href="/signup" className="tm-btn-primary mt-3 w-full">
+                Sign Up
+              </Link>
             </nav>
           </SheetContent>
         </Sheet>

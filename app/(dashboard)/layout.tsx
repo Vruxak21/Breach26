@@ -10,7 +10,6 @@ import {
   Heart,
   User as UserIcon,
 } from "lucide-react";
-import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { cn } from "@/lib/utils";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -42,10 +41,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-          <p className="text-sm text-slate-500">Loading...</p>
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: "var(--bg-subtle)" }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="h-10 w-10 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: "var(--accent-200)", borderTopColor: "var(--accent-500)" }}
+          />
+          <p
+            className="text-[14px] font-medium"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--text-muted)" }}
+          >
+            Setting up your workspace...
+          </p>
         </div>
       </div>
     );
@@ -59,18 +69,26 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <SidebarProvider defaultOpen>
       <Sidebar />
 
-      <SidebarInset className="min-h-screen bg-slate-50">
-        <Navbar />
-
-        <main className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-20 pt-4 lg:px-12 md:pb-8">
+      <SidebarInset
+        className="min-h-screen"
+        style={{ background: "var(--bg-base)" }}
+      >
+        <main
+          className={cn(
+            "relative flex w-full flex-1 flex-col",
+            pathname.startsWith("/search")
+              ? "h-[100dvh] min-h-0 overflow-hidden pb-24 md:pb-10"
+              : "mx-auto max-w-7xl px-6 pb-24 pt-6 lg:px-10 md:pb-10"
+          )}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="flex-1"
+              className={cn("flex-1", pathname.startsWith("/search") && "min-h-0")}
             >
               {children}
             </motion.div>
@@ -79,8 +97,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </SidebarInset>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md md:hidden">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-2.5">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 md:hidden"
+        style={{
+          background: "rgba(255,255,255,0.97)",
+          backdropFilter: "blur(12px)",
+          borderTop: "1px solid var(--border-light)",
+          boxShadow: "0 -1px 12px rgba(17,17,16,0.06)",
+        }}
+      >
+        <div className="mx-auto flex max-w-lg items-center justify-between px-2 py-2">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -92,20 +118,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <a
                 key={item.href}
                 href={item.href}
-                className={cn(
-                  "flex flex-1 flex-col items-center gap-1 text-xs font-medium",
-                  isActive ? "text-indigo-600" : "text-slate-400",
-                )}
+                className="flex flex-1 flex-col items-center gap-1"
               >
                 <div
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full",
-                    isActive ? "bg-indigo-50" : "bg-transparent",
+                    "flex h-9 w-9 items-center justify-center rounded-full transition-colors"
                   )}
+                  style={{
+                    background: isActive ? "var(--accent-50)" : "transparent",
+                  }}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon
+                    className="h-4.5 w-4.5"
+                    style={{ color: isActive ? "var(--accent-500)" : "var(--text-muted)" }}
+                  />
                 </div>
-                <span className={cn(isActive ? "opacity-100" : "opacity-80")}>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{ color: isActive ? "var(--accent-600)" : "var(--text-muted)" }}
+                >
                   {item.label}
                 </span>
               </a>

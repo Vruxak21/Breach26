@@ -3,15 +3,19 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Activity,
+  AlertCircle,
   ArrowRight,
   Calendar,
   DollarSign,
+  HeartPulse,
   Loader2,
   MapPin,
+  Scale,
   Sparkles,
   Users,
+  Wallet,
   X,
-  AlertCircle,
 } from "lucide-react";
 import { useTripStore } from "@/lib/stores/trip-store";
 
@@ -22,11 +26,11 @@ const interestOptions = [
 ];
 
 const travelStyles = [
-  { value: "relaxed", label: "Relaxed", emoji: "🧘" },
-  { value: "balanced", label: "Balanced", emoji: "⚖️" },
-  { value: "packed", label: "Action-Packed", emoji: "🏃" },
-  { value: "luxury", label: "Luxury", emoji: "✨" },
-  { value: "budget", label: "Budget", emoji: "💰" },
+  { value: "relaxed", label: "Relaxed", icon: HeartPulse },
+  { value: "balanced", label: "Balanced", icon: Scale },
+  { value: "packed", label: "Action-Packed", icon: Activity },
+  { value: "luxury", label: "Luxury", icon: Sparkles },
+  { value: "budget", label: "Budget", icon: Wallet },
 ];
 
 const examplePrompts = [
@@ -59,16 +63,13 @@ function PlannerContent() {
 
   const toggleInterest = (interest: string) => {
     setInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
+      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]
     );
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-
     if (!destination.trim()) return;
 
     const result = await generateItinerary({
@@ -83,26 +84,57 @@ function PlannerContent() {
       interests,
     });
 
-    if (result) {
-      router.push(`/proposal`);
-    }
+    if (result) router.push("/proposal");
+  };
+
+  const inputStyle = {
+    background: "var(--bg-wash)",
+    border: "1px solid var(--border-default)",
+    borderRadius: "var(--radius-sm)",
+    fontFamily: "var(--font-sans)",
+    fontSize: "15px",
+    color: "var(--text-primary)",
+    padding: "11px 14px",
+    outline: "none",
+    width: "100%",
+    transition: "all 150ms",
+  };
+
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "var(--primary-500)";
+    e.target.style.boxShadow = "var(--shadow-primary)";
+    e.target.style.background = "var(--bg-base)";
+  };
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "var(--border-default)";
+    e.target.style.boxShadow = "none";
+    e.target.style.background = "var(--bg-wash)";
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-7">
       {/* Header */}
-      <div className="text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-          <Sparkles className="h-6 w-6" />
+      <div>
+        <div
+          className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 mb-4"
+          style={{ background: "var(--accent-50)", border: "1px solid var(--accent-200)", color: "var(--accent-700)" }}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="text-[12px] font-600 uppercase tracking-wider">AI Trip Planner</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Plan Your Dream Trip</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Tell us about your ideal trip and AI will create a personalized itinerary
+        <h1
+          className="text-[40px] font-700 leading-tight"
+          style={{ fontFamily: "var(--font-display), 'Playfair Display', serif", color: "var(--text-primary)" }}
+        >
+          Plan Your Dream Trip
+        </h1>
+        <p className="mt-2 text-[15px]" style={{ color: "var(--text-muted)" }}>
+          Tell us where you want to go and our AI will craft a perfect personalized itinerary.
         </p>
       </div>
 
       {/* Example Prompts */}
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex flex-wrap gap-2">
         {examplePrompts.map((prompt) => (
           <button
             key={prompt}
@@ -111,7 +143,22 @@ function PlannerContent() {
               setDestination(dest);
               setDescription(prompt);
             }}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            className="rounded-full px-3 py-1.5 text-[12px] font-medium transition-all"
+            style={{
+              border: "1px solid var(--border-default)",
+              background: "var(--bg-base)",
+              color: "var(--text-muted)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-300)";
+              (e.currentTarget as HTMLElement).style.background = "var(--accent-50)";
+              (e.currentTarget as HTMLElement).style.color = "var(--accent-700)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)";
+              (e.currentTarget as HTMLElement).style.background = "var(--bg-base)";
+              (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+            }}
           >
             {prompt}
           </button>
@@ -120,82 +167,99 @@ function PlannerContent() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div
+          className="flex items-start gap-3 rounded-xl px-4 py-3 text-[14px]"
+          style={{
+            background: "var(--danger-bg)",
+            border: "1px solid var(--danger-border)",
+            color: "var(--danger-text)",
+          }}
+        >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="flex-1">{error}</div>
-          <button onClick={clearError} className="text-rose-400 hover:text-rose-600">
+          <button onClick={clearError} style={{ color: "var(--danger-text)", opacity: 0.7 }}>
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
       {/* Form */}
-      <form onSubmit={handleGenerate} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <form
+        onSubmit={handleGenerate}
+        className="space-y-6 rounded-xl p-7"
+        style={{ background: "var(--bg-base)", border: "1px solid var(--border-default)", boxShadow: "var(--shadow-sm)" }}
+      >
         {/* Destination */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Destination *</label>
+          <label className="tm-label-field">Destination *</label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
             <input
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               placeholder="Where do you want to go?"
               required
-              className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              style={{ ...inputStyle, paddingLeft: "40px" }}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
             />
           </div>
         </div>
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Describe your trip</label>
+          <label className="tm-label-field">Describe your trip</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell us about your ideal trip — what activities, types of food, experiences..."
+            placeholder="Tell us about your ideal trip — activities, food, experiences..."
             rows={3}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            style={{
+              ...inputStyle,
+              padding: "11px 14px",
+              minHeight: "100px",
+              resize: "vertical",
+            }}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
         </div>
 
         {/* Dates + Travelers */}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Start Date</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              />
+          {[
+            { label: "Start Date", icon: Calendar, type: "date", value: startDate, onChange: (v: string) => setStartDate(v) },
+            { label: "End Date", icon: Calendar, type: "date", value: endDate, onChange: (v: string) => setEndDate(v) },
+          ].map(({ label, icon: Icon, type, value, onChange }) => (
+            <div key={label} className="space-y-1.5">
+              <label className="tm-label-field">{label}</label>
+              <div className="relative">
+                <Icon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                <input
+                  type={type}
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: "40px" }}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                />
+              </div>
             </div>
-          </div>
+          ))}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">End Date</label>
+            <label className="tm-label-field">Travelers</label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Travelers</label>
-            <div className="relative">
-              <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Users className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
               <input
                 type="number"
                 value={travelers}
                 onChange={(e) => setTravelers(Number(e.target.value))}
                 min={1}
                 max={20}
-                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                style={{ ...inputStyle, paddingLeft: "40px" }}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
             </div>
           </div>
@@ -204,24 +268,28 @@ function PlannerContent() {
         {/* Budget + Currency */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Budget</label>
+            <label className="tm-label-field">Budget</label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <DollarSign className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
               <input
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
                 min={1000}
-                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                style={{ ...inputStyle, paddingLeft: "40px" }}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Currency</label>
+            <label className="tm-label-field">Currency</label>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              style={{ ...inputStyle, cursor: "pointer" }}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
             >
               <option value="INR">INR (₹)</option>
               <option value="USD">USD ($)</option>
@@ -232,63 +300,78 @@ function PlannerContent() {
         </div>
 
         {/* Travel Style */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Travel Style</label>
+        <div className="space-y-2.5">
+          <label className="tm-label-field">Travel Style</label>
           <div className="flex flex-wrap gap-2">
             {travelStyles.map((style) => (
               <button
                 key={style.value}
                 type="button"
                 onClick={() => setTravelStyle(style.value)}
-                className={`rounded-xl border px-4 py-2 text-sm transition ${
-                  travelStyle === style.value
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                }`}
+                className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13px] font-medium transition-all"
+                style={{
+                  border: `1px solid ${travelStyle === style.value ? "var(--primary-400)" : "var(--border-default)"}`,
+                  background: travelStyle === style.value ? "var(--primary-50)" : "var(--bg-base)",
+                  color: travelStyle === style.value ? "var(--primary-700)" : "var(--text-secondary)",
+                }}
               >
-                {style.emoji} {style.label}
+                <style.icon className="h-4 w-4 shrink-0" />
+                {style.label}
               </button>
             ))}
           </div>
         </div>
 
         {/* Interests */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Interests</label>
+        <div className="space-y-2.5">
+          <label className="tm-label-field">Interests</label>
           <div className="flex flex-wrap gap-2">
-            {interestOptions.map((interest) => (
-              <button
-                key={interest}
-                type="button"
-                onClick={() => toggleInterest(interest.toLowerCase())}
-                className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                  interests.includes(interest.toLowerCase())
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                }`}
-              >
-                {interest}
-              </button>
-            ))}
+            {interestOptions.map((interest) => {
+              const isSelected = interests.includes(interest.toLowerCase());
+              return (
+                <button
+                  key={interest}
+                  type="button"
+                  onClick={() => toggleInterest(interest.toLowerCase())}
+                  className="rounded-full px-3 py-1.5 text-[12px] font-medium transition-all"
+                  style={{
+                    border: `1px solid ${isSelected ? "var(--accent-300)" : "var(--border-default)"}`,
+                    background: isSelected ? "var(--accent-50)" : "var(--bg-base)",
+                    color: isSelected ? "var(--accent-700)" : "var(--text-muted)",
+                  }}
+                >
+                  {interest}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Submit */}
+        {/* CTA */}
         <button
           type="submit"
           disabled={isGenerating || !destination.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2.5 text-[15px] font-600 text-white transition-all disabled:cursor-not-allowed disabled:opacity-50"
+          style={{
+            background: isGenerating ? "var(--accent-400)" : "var(--accent-500)",
+            borderRadius: "var(--radius-sm)",
+            padding: "14px 24px",
+            fontFamily: "var(--font-sans)",
+            boxShadow: "var(--shadow-accent)",
+            border: "none",
+            cursor: isGenerating || !destination.trim() ? "not-allowed" : "pointer",
+          }}
         >
           {isGenerating ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
               Generating your itinerary...
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-5 w-5" />
               Generate My Itinerary
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-5 w-5" />
             </>
           )}
         </button>
@@ -299,11 +382,16 @@ function PlannerContent() {
 
 export default function PlannerPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div
+            className="h-8 w-8 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: "var(--accent-200)", borderTopColor: "var(--accent-500)" }}
+          />
+        </div>
+      }
+    >
       <PlannerContent />
     </Suspense>
   );

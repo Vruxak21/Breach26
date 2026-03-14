@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Fix Leaflet default icon paths for Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+const iconDefaultPrototype = L.Icon.Default.prototype as L.Icon.Default & {
+  _getIconUrl?: unknown;
+};
+delete iconDefaultPrototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -28,8 +31,10 @@ interface Activity {
 interface ActivityMapProps {
   activities: Activity[];
   center: [number, number];
-  onHover: (activity: Activity) => void;
-  onLeave: () => void;
+  onHover?: (activity: Activity) => void;
+  onLeave?: () => void;
+  zoom?: number;
+  animateToCenter?: boolean;
 }
 
 // Category-based marker colors
@@ -77,19 +82,44 @@ function createCategoryIcon(category: string): L.DivIcon {
   });
 }
 
-function MapUpdater({ center }: { center: [number, number] }) {
+function MapUpdater({
+  center,
+  zoom = 13,
+  animateToCenter = true,
+}: {
+  center: [number, number];
+  zoom?: number;
+  animateToCenter?: boolean;
+}) {
   const map = useMap();
+
   useEffect(() => {
-    map.setView(center, 13);
-  }, [center, map]);
+    if (animateToCenter) {
+      map.flyTo(center, zoom, {
+        duration: 1.1,
+        easeLinearity: 0.25,
+      });
+      return;
+    }
+
+    map.setView(center, zoom);
+  }, [animateToCenter, center, map, zoom]);
+
   return null;
 }
 
-export default function ActivityMap({ activities, center, onHover, onLeave }: ActivityMapProps) {
+export default function ActivityMap({
+  activities,
+  center,
+  onHover,
+  onLeave,
+  zoom = 13,
+  animateToCenter = true,
+}: ActivityMapProps) {
   return (
     <MapContainer
       center={center}
-      zoom={13}
+      zoom={zoom}
       style={{ height: "100%", width: "100%" }}
       zoomControl={true}
     >
@@ -97,7 +127,7 @@ export default function ActivityMap({ activities, center, onHover, onLeave }: Ac
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapUpdater center={center} />
+      <MapUpdater center={center} zoom={zoom} animateToCenter={animateToCenter} />
       
       {activities.map((activity) => {
         if (!activity.lat || !activity.lng) return null;
@@ -107,8 +137,8 @@ export default function ActivityMap({ activities, center, onHover, onLeave }: Ac
             position={[activity.lat, activity.lng]}
             icon={createCategoryIcon(activity.category)}
             eventHandlers={{
-              mouseover: () => onHover(activity),
-              mouseout: () => onLeave(),
+              mouseover: () => onHover?.(activity),
+              mouseout: () => onLeave?.(),
             }}
           >
             <Popup>

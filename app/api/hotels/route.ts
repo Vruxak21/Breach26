@@ -2,18 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const destination = searchParams.get("destination");
+  const city = searchParams.get("city");
   const checkin = searchParams.get("checkin");
   const checkout = searchParams.get("checkout");
   const guests = searchParams.get("guests") || "2";
   const currency = searchParams.get("currency") || "USD";
 
-  if (!destination || !checkin || !checkout) {
+  if (!city || !checkin || !checkout) {
     return NextResponse.json(
-      { error: "destination, checkin, and checkout are required" },
+      { error: "city, checkin, and checkout are required" },
       { status: 400 }
     );
   }
+
+  const destination = city;
 
   const apiKey = process.env.LITEAPI_API_KEY;
   if (!apiKey || apiKey === "your_liteapi_key_here") {

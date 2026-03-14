@@ -8,11 +8,13 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
+  MapPin,
   Plane,
   Search,
   Settings,
   Sparkles,
   User,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -29,6 +31,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -48,25 +57,13 @@ interface SidebarTrip {
   status: string;
 }
 
-function getStatusDotColor(status: Status): string {
+function getStatusDotStyle(status: Status): string {
   switch (status) {
-    case "active":
-      return "bg-emerald-500";
-    case "completed":
-      return "bg-slate-400";
+    case "active":    return "background: var(--success-icon)";
+    case "completed": return "background: var(--text-subtle)";
     case "draft":
-    default:
-      return "bg-amber-400";
+    default:          return "background: var(--warning-icon)";
   }
-}
-
-function getFlagEmoji(country: string): string {
-  if (country === "India") return "🇮🇳";
-  if (country === "Indonesia") return "🇮🇩";
-  if (country === "France") return "🇫🇷";
-  if (country === "Japan") return "🇯🇵";
-  if (country === "Thailand") return "🇹🇭";
-  return "🌍";
 }
 
 function getInitials(name: string): string {
@@ -83,11 +80,10 @@ export function Sidebar() {
   const { data: session } = useSession();
   const [recentTrips, setRecentTrips] = useState<SidebarTrip[]>([]);
 
-  const userName = session?.user?.name || "User";
+  const userName = session?.user?.name || "Traveler";
   const userEmail = session?.user?.email || "";
 
   useEffect(() => {
-    // Fetch user's recent trips
     fetch("/api/itinerary/user")
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
@@ -95,9 +91,7 @@ export function Sidebar() {
           setRecentTrips(data.slice(0, 3));
         }
       })
-      .catch(() => {
-        // Silently fail — sidebar still renders
-      });
+      .catch(() => {});
   }, []);
 
   const handleSignOut = async () => {
@@ -114,31 +108,53 @@ export function Sidebar() {
     <ShadcnSidebar
       variant="sidebar"
       side="left"
-      className="border-r border-[#E8E8E2] bg-white/95"
+      style={{ borderRight: "1px solid var(--border-light)", background: "var(--bg-base)" }}
     >
-      <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center gap-2 px-1">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4F46E5] shadow-sm">
+      {/* Header / Logo */}
+      <SidebarHeader className="px-4 py-5">
+        <Link href="/" className="flex items-center gap-2.5 px-1">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-xl"
+            style={{ background: "var(--accent-50)", color: "var(--accent-500)" }}
+          >
             <Plane className="h-4 w-4" />
           </div>
-          <span className="font-display text-2xl font-bold tracking-tight text-[#111111]">
+          <span
+            className="text-[22px] font-bold tracking-tight"
+            style={{
+              fontFamily: "var(--font-display), 'Playfair Display', serif",
+              color: "var(--text-primary)",
+            }}
+          >
             TravelMind
           </span>
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent className="px-2 pb-4">
+        {/* Main menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className="px-2 text-xs font-semibold tracking-[0.16em] text-[#9CA3AF]">
-            MENU
+          <SidebarGroupLabel
+            className="px-3"
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--text-subtle)",
+              padding: "16px 12px 6px",
+            }}
+          >
+            Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-0.5">
               {menuItems.map((item) => {
                 const isActive =
                   item.href === "/dashboard"
                     ? pathname === "/" || pathname.startsWith(item.href)
                     : pathname.startsWith(item.href);
+                const isHighlighted = "highlighted" in item && item.highlighted;
                 const Icon = item.icon;
 
                 return (
@@ -146,14 +162,34 @@ export function Sidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={cn(
-                        "h-10 rounded-xl px-3 text-sm font-medium text-[#6B7280] hover:bg-[#F7F7F4] hover:text-[#111111]",
-                        isActive && "bg-[#EEF2FF] text-[#4338CA]",
-                        "highlighted" in item && item.highlighted && !isActive && "bg-[#FFF7ED] text-[#C2410C] hover:bg-orange-100",
-                      )}
+                      className={cn("h-10 rounded-xl px-3 text-[14px] font-medium transition-all duration-120 relative")}
+                      style={
+                        isActive
+                          ? {
+                              background: "var(--primary-50)",
+                              color: "var(--primary-700)",
+                              borderLeft: "3px solid var(--primary-500)",
+                            }
+                          : isHighlighted && !isActive
+                          ? {
+                              color: "var(--accent-700)",
+                            }
+                          : {
+                              color: "var(--text-secondary)",
+                            }
+                      }
                     >
                       <Link href={item.href}>
-                        <Icon className="h-4 w-4" />
+                        <Icon
+                          className="h-4 w-4 shrink-0"
+                          style={{
+                            color: isActive
+                              ? "var(--primary-500)"
+                              : isHighlighted && !isActive
+                              ? "var(--accent-500)"
+                              : "var(--text-muted)",
+                          }}
+                        />
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -164,15 +200,28 @@ export function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Recent Trips */}
         <SidebarGroup>
-          <SidebarGroupLabel className="px-2 text-xs font-semibold tracking-[0.16em] text-[#9CA3AF]">
-            TRIPS
+          <SidebarGroupLabel
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--text-subtle)",
+              padding: "16px 12px 6px",
+            }}
+          >
+            Recent Trips
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
+            <SidebarMenu className="gap-1">
               {recentTrips.length === 0 ? (
                 <SidebarMenuItem>
-                  <div className="px-3 py-2 text-xs text-slate-400 italic">
+                  <div
+                    className="px-3 py-2 text-xs italic"
+                    style={{ color: "var(--text-subtle)" }}
+                  >
                     No trips yet — plan your first!
                   </div>
                 </SidebarMenuItem>
@@ -181,21 +230,35 @@ export function Sidebar() {
                   <SidebarMenuItem key={trip.id}>
                     <SidebarMenuButton
                       asChild
-                      className="h-auto rounded-xl border border-[#E8E8E2] bg-[#F7F7F4] px-3 py-2 text-xs shadow-sm hover:border-[#D4D4CC] hover:bg-white"
+                      className="h-auto rounded-xl px-3 py-2.5 text-xs transition-all"
+                      style={{
+                        border: "1px solid var(--border-default)",
+                        background: "var(--bg-wash)",
+                      }}
                     >
                       <Link href={`/itinerary/${trip.id}/view`}>
                         <span
-                          className={cn(
-                            "h-2.5 w-2.5 rounded-full",
-                            getStatusDotColor(trip.status as Status),
-                          )}
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ display: "inline-block", ...Object.fromEntries(
+                            getStatusDotStyle(trip.status as Status).split(";").filter(Boolean).map(s => {
+                              const [k, v] = s.split(":").map(x => x.trim());
+                              return [k.replace(/-([a-z])/g, (_, l) => l.toUpperCase()), v];
+                            })
+                          ) }}
                         />
-                        <span className="flex min-w-0 flex-col">
-                          <span className="max-w-[9rem] truncate text-[11px] font-medium text-slate-800">
+                        <span className="flex min-w-0 flex-col gap-0.5">
+                          <span
+                            className="max-w-[9rem] truncate text-[12px] font-medium"
+                            style={{ color: "var(--text-primary)" }}
+                          >
                             {trip.title}
                           </span>
-                          <span className="text-[11px] text-slate-500">
-                            {trip.destination} {getFlagEmoji(trip.country)}
+                          <span
+                            className="truncate text-[11px] flex items-center gap-1"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            {trip.destination}, {trip.country}
                           </span>
                         </span>
                       </Link>
@@ -207,69 +270,82 @@ export function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-2 text-xs font-semibold tracking-[0.16em] text-[#9CA3AF]">
-            ACCOUNT
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="h-10 rounded-xl px-3 text-sm font-medium text-[#6B7280] hover:bg-[#F7F7F4] hover:text-[#111111]"
-                >
-                  <Link href="/profile">
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton className="h-10 rounded-xl px-3 text-sm font-medium text-[#6B7280] hover:bg-[#F7F7F4] hover:text-[#111111]">
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton className="h-10 rounded-xl px-3 text-sm font-medium text-[#6B7280] hover:bg-[#F7F7F4] hover:text-[#111111]">
-                  <HelpCircle className="h-4 w-4" />
-                  <span>Help</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleSignOut}
-                  className="h-10 rounded-xl px-3 text-sm font-medium text-rose-500 hover:bg-rose-50 hover:text-rose-700"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+
       </SidebarContent>
 
-      <SidebarFooter className="px-4 pb-4 pt-2">
-        <div className="space-y-3 rounded-2xl border border-[#E8E8E2] bg-[#F7F7F4] p-3 shadow-inner">
-          <div className="flex items-center gap-3">
-            {session?.user?.image ? (
-              <img
-                src={session.user.image}
-                alt={userName}
-                className="h-9 w-9 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-semibold text-white">
-                {getInitials(userName)}
+      {/* Footer: User card */}
+      <SidebarFooter className="p-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div
+              className="space-y-3 rounded-xl p-3 cursor-pointer"
+              style={{
+                border: "1px solid var(--border-light)",
+                background: "var(--bg-subtle)",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                {session?.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt={userName}
+                    className="h-9 w-9 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white shrink-0"
+                    style={{ background: "var(--accent-500)" }}
+                  >
+                    {getInitials(userName)}
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col min-w-0">
+                  <span
+                    className="text-[13px] font-semibold truncate"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {userName}
+                  </span>
+                  <span
+                    className="text-[11px] truncate"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {userEmail}
+                  </span>
+                </div>
               </div>
-            )}
-            <div className="flex flex-1 flex-col">
-              <span className="text-sm font-medium text-slate-900">{userName}</span>
-              <span className="text-xs text-slate-500">{userEmail}</span>
             </div>
-          </div>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="right"
+            align="end"
+            sideOffset={12}
+            className="w-56 rounded-xl border-border-light shadow-lg"
+            style={{ fontFamily: "var(--font-sans)", background: "var(--bg-base)" }}
+          >
+            {[
+              { label: "Notifications", icon: Bell, href: "/notifications" },
+              { label: "Profile", icon: User, href: "/profile" },
+              { label: "Settings", icon: Settings, href: "#" },
+              { label: "Help & Support", icon: HelpCircle, href: "#" },
+            ].map((acct) => (
+              <DropdownMenuItem key={acct.label} asChild className="cursor-pointer gap-2 px-3 py-2.5 text-[14px]">
+                <Link href={acct.href} className="flex items-center w-full">
+                  <acct.icon className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+                  <span style={{ color: "var(--text-secondary)" }}>{acct.label}</span>
+                </Link>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator style={{ background: "var(--border-light)" }} />
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="cursor-pointer gap-2 px-3 py-2.5 text-[14px]"
+            >
+              <LogOut className="h-4 w-4" style={{ color: "var(--danger-text)" }} />
+              <span style={{ color: "var(--danger-text)" }}>Sign Out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </ShadcnSidebar>
   );
