@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Crown,
   HelpCircle,
   Heart,
   LayoutDashboard,
+  Lock,
   LogOut,
   Map,
   Plane,
@@ -13,6 +15,7 @@ import {
   Settings,
   Sparkles,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -83,6 +86,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [recentTrips, setRecentTrips] = useState<SidebarTrip[]>([]);
+  const [userPlan, setUserPlan] = useState<"basic" | "pro">("basic");
   const { newCount, fetchItems, isLoaded } = useWishlistStore();
 
   const userName = session?.user?.name || "User";
@@ -104,6 +108,14 @@ export function Sidebar() {
       .catch(() => {
         // Silently fail — sidebar still renders
       });
+  }, []);
+
+  // Fetch user plan
+  useEffect(() => {
+    fetch("/api/user/plan")
+      .then((res) => (res.ok ? res.json() : { plan: "basic" }))
+      .then((data) => setUserPlan(data.plan || "basic"))
+      .catch(() => {});
   }, []);
 
   const handleSignOut = async () => {
@@ -171,6 +183,50 @@ export function Sidebar() {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Collaboration - Pro only */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-2 text-xs font-semibold tracking-[0.16em] text-[#9CA3AF]">
+            COLLABORATE
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={cn(
+                    "h-10 rounded-xl px-3 text-sm font-medium",
+                    userPlan === "pro"
+                      ? "text-[#6B7280] hover:bg-[#F7F7F4] hover:text-[#111111]"
+                      : "text-slate-300 cursor-not-allowed"
+                  )}
+                  disabled={userPlan !== "pro"}
+                >
+                  {userPlan === "pro" ? (
+                    <Link href="/collaboration">
+                      <Users className="h-4 w-4" />
+                      <span>Collaboration</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>Collaboration</span>
+                      <Lock className="ml-auto h-3 w-3 text-slate-300" />
+                    </div>
+                  )}
+                </SidebarMenuButton>
+                {userPlan !== "pro" && (
+                  <Link
+                    href="/choose-plan"
+                    className="mt-1 ml-3 block text-[10px] font-medium text-indigo-500 hover:text-indigo-600 hover:underline"
+                  >
+                    Upgrade to Pro →
+                  </Link>
+                )}
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -276,7 +332,18 @@ export function Sidebar() {
               </div>
             )}
             <div className="flex flex-1 flex-col">
-              <span className="text-sm font-medium text-slate-900">{userName}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-900">{userName}</span>
+                <span className={cn(
+                  "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                  userPlan === "pro"
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                    : "bg-slate-100 text-slate-500"
+                )}>
+                  {userPlan === "pro" && <Crown className="h-2.5 w-2.5" />}
+                  {userPlan}
+                </span>
+              </div>
               <span className="text-xs text-slate-500">{userEmail}</span>
             </div>
           </div>

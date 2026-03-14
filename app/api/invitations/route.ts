@@ -2,13 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
+import { checkFeatureAccess } from "@/lib/plan-access";
 
-// POST /api/invitations — Send an invitation
+// POST /api/invitations — Send an invitation (Pro only)
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Plan-based access check: collaboration is Pro only
+    const hasAccess = await checkFeatureAccess(session.user.id, "invitations");
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Upgrade to Pro to access group collaboration features" },
+        { status: 403 }
+      );
     }
 
     const { itineraryId, email, role, message } = await request.json();

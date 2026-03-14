@@ -9,31 +9,16 @@ import {
   Loader2,
   MapPin,
   Sparkles,
-  Users,
   X,
   AlertCircle,
 } from "lucide-react";
 import { useTripStore } from "@/lib/stores/trip-store";
 
-const interestOptions = [
-  "Beaches", "Temples", "Nightlife", "Food", "History",
-  "Adventure", "Nature", "Shopping", "Art", "Wellness",
-  "Photography", "Sports", "Wildlife", "Architecture", "Festivals",
-];
-
-const travelStyles = [
-  { value: "relaxed", label: "Relaxed", emoji: "🧘" },
-  { value: "balanced", label: "Balanced", emoji: "⚖️" },
-  { value: "packed", label: "Action-Packed", emoji: "🏃" },
-  { value: "luxury", label: "Luxury", emoji: "✨" },
-  { value: "budget", label: "Budget", emoji: "💰" },
-];
-
 const examplePrompts = [
-  "5 days in Bali with beaches, temples and local food",
-  "A romantic week in Paris with museums and fine dining",
-  "4 days adventure trip in Swiss Alps with hiking",
-  "Cultural exploration of Kyoto during cherry blossom season",
+  "5 days in Bali with beaches, temples and local food for 2 people, relaxed style",
+  "A romantic week in Paris with museums and fine dining, luxury budget in EUR",
+  "4 days adventure trip in Swiss Alps with hiking, 3 travelers, packed schedule",
+  "Cultural exploration of Kyoto, budget-friendly, solo travel, interested in temples and street food",
 ];
 
 function PlannerContent() {
@@ -44,26 +29,14 @@ function PlannerContent() {
   const [destination, setDestination] = useState(searchParams.get("destination") || "");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState(50000);
-  const [currency, setCurrency] = useState("INR");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [travelers, setTravelers] = useState(2);
-  const [travelStyle, setTravelStyle] = useState("balanced");
-  const [interests, setInterests] = useState<string[]>([]);
 
   useEffect(() => {
     if (searchParams.get("destination")) {
       setDestination(searchParams.get("destination")!);
     }
   }, [searchParams]);
-
-  const toggleInterest = (interest: string) => {
-    setInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
-    );
-  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,12 +48,8 @@ function PlannerContent() {
       destination: destination.trim(),
       description: description.trim(),
       budget,
-      currency,
       startDate: startDate || new Date().toISOString().split("T")[0],
       endDate: endDate || new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0],
-      travelers,
-      travelStyle,
-      interests,
     });
 
     if (result) {
@@ -97,7 +66,7 @@ function PlannerContent() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900">Plan Your Dream Trip</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Tell us about your ideal trip and AI will create a personalized itinerary
+          Describe your ideal trip in detail — our AI extracts preferences, style, and more from your description
         </p>
       </div>
 
@@ -107,13 +76,13 @@ function PlannerContent() {
           <button
             key={prompt}
             onClick={() => {
-              const dest = prompt.split(" in ")[1]?.split(" with ")[0] || "";
+              const dest = prompt.split(" in ")[1]?.split(" with ")[0]?.split(" for ")[0]?.split(",")[0] || "";
               setDestination(dest);
               setDescription(prompt);
             }}
             className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
           >
-            {prompt}
+            {prompt.length > 60 ? prompt.slice(0, 57) + "..." : prompt}
           </button>
         ))}
       </div>
@@ -147,19 +116,22 @@ function PlannerContent() {
           </div>
         </div>
 
-        {/* Description */}
+        {/* Description — the main prompt input */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">Describe your trip</label>
+          <label className="text-sm font-medium text-slate-700">Describe your trip *</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell us about your ideal trip — what activities, types of food, experiences..."
-            rows={3}
+            placeholder="Tell us everything — travel style, number of travelers, interests, budget preferences, cuisine choices, activities you enjoy, things to avoid..."
+            rows={4}
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
+          <p className="text-xs text-slate-400">
+            💡 Include details like: number of travelers, travel style (relaxed, packed, luxury), interests (food, temples, nightlife), and currency preference
+          </p>
         </div>
 
-        {/* Dates + Travelers */}
+        {/* Dates + Budget */}
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700">Start Date</label>
@@ -186,24 +158,6 @@ function PlannerContent() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Travelers</label>
-            <div className="relative">
-              <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="number"
-                value={travelers}
-                onChange={(e) => setTravelers(Number(e.target.value))}
-                min={1}
-                max={20}
-                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Budget + Currency */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700">Budget</label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -215,61 +169,6 @@ function PlannerContent() {
                 className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Currency</label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="INR">INR (₹)</option>
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Travel Style */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Travel Style</label>
-          <div className="flex flex-wrap gap-2">
-            {travelStyles.map((style) => (
-              <button
-                key={style.value}
-                type="button"
-                onClick={() => setTravelStyle(style.value)}
-                className={`rounded-xl border px-4 py-2 text-sm transition ${
-                  travelStyle === style.value
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                }`}
-              >
-                {style.emoji} {style.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Interests */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Interests</label>
-          <div className="flex flex-wrap gap-2">
-            {interestOptions.map((interest) => (
-              <button
-                key={interest}
-                type="button"
-                onClick={() => toggleInterest(interest.toLowerCase())}
-                className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                  interests.includes(interest.toLowerCase())
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-                }`}
-              >
-                {interest}
-              </button>
-            ))}
           </div>
         </div>
 
