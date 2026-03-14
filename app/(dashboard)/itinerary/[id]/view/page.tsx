@@ -226,7 +226,7 @@ export default function ViewItineraryPage() {
           </div>
 
           <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-[#E8E8E2] bg-white shadow-sm">
-            <ItineraryMapRegion itineraryId={id as string} destination={trip.destination} country={trip.country} />
+            <ItineraryMapRegion days={days} destination={trip.destination} country={trip.country} />
           </div>
         </div>
 
@@ -269,7 +269,7 @@ export default function ViewItineraryPage() {
             {activeView === "calendar" ? (
               <TripCalendar itineraryId={id as string} />
             ) : (
-              <TripTimeline itineraryId={id as string} />
+              <TripTimeline days={days} />
             )}
           </div>
 

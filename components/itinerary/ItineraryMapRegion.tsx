@@ -4,17 +4,16 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Loader2, MapPin, Star, Clock } from "lucide-react";
 
-// Dynamically import map to avoid SSR issues with Leaflet
 const ActivityMap = dynamic(() => import("@/components/map/ActivityMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full flex-colItems-center justify-center bg-slate-50">
+    <div className="flex h-full w-full items-center justify-center bg-slate-50">
       <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mx-auto mt-20" />
     </div>
   ),
 });
 
-interface Activity {
+interface MapActivity {
   id: string;
   name: string;
   category: string;
@@ -29,83 +28,109 @@ interface Activity {
   currency?: string;
 }
 
+interface DayActivity {
+  name: string;
+  description?: string;
+  time?: string;
+  duration?: number;
+  category?: string;
+  estimatedCost?: number;
+  lat?: number;
+  lng?: number;
+}
+
+interface Day {
+  day: number;
+  date: string;
+  title?: string;
+  activities: DayActivity[];
+}
+
 export function ItineraryMapRegion({
-  itineraryId,
+  days,
   destination,
   country,
 }: {
-  itineraryId: string;
+  days: Day[];
   destination: string;
   country?: string;
 }) {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [mapActivities, setMapActivities] = useState<MapActivity[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hoveredActivity, setHoveredActivity] = useState<Activity | null>(null);
+  const [hoveredActivity, setHoveredActivity] = useState<MapActivity | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchMapData() {
-      if (!destination || !itineraryId) return;
-
+    async function buildMap() {
       try {
         setIsLoading(true);
-        // 1. Get destination center as fallback
+
+        // 1. Geocode the destination to get map center
         const query = country ? `${destination}, ${country}` : destination;
         const geoRes = await fetch(`/api/geocode?query=${encodeURIComponent(query)}`);
         const geoData = geoRes.ok ? await geoRes.json() : [];
         let center: [number, number] | null = null;
-        
+
         if (geoData.length > 0) {
           center = [parseFloat(geoData[0].lat), parseFloat(geoData[0].lng)];
         }
 
-        // 2. Fetch user's planned activities
-        const actRes = await fetch(`/api/itinerary/${itineraryId}/activities`);
-        const userActivities = actRes.ok ? await actRes.json() : [];
-
-        // 3. Geocode each activity location sequentially
-        const mappedActivities: Activity[] = [];
-        for (const act of userActivities) {
-          if (act.location) {
-            // A slight delay to prevent strict rate limiting from open API geocoders
-            await new Promise((r) => setTimeout(r, 600)); 
-            try {
-              const actGeoRes = await fetch(`/api/geocode?query=${encodeURIComponent(act.location)}`);
-              const actGeoData = actGeoRes.ok ? await actGeoRes.json() : [];
-              
-              if (actGeoData.length > 0) {
-                const lat = parseFloat(actGeoData[0].lat);
-                const lng = parseFloat(actGeoData[0].lng);
-                
-                mappedActivities.push({
-                  id: act.id,
-                  name: act.title,
-                  category: act.type,
-                  lat,
-                  lng,
-                  description: act.description || "Activity planned for your trip.",
-                  duration: act.startTime && act.endTime ? 60 : undefined,
-                  image: `https://maps.geoapify.com/v1/staticmap?style=osm-bright-smooth&width=400&height=300&center=lonlat:${lng},${lat}&zoom=15&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY || "YOUR_KEY"}`,
-                });
-              }
-            } catch (e) {
-              console.error("Failed to geocode activity:", act.title);
+        // 2. Extract pinnable activities from trip.days (the AI-generated itinerary)
+        const pinnedActivities: MapActivity[] = [];
+        for (const day of days) {
+          for (const act of day.activities || []) {
+            if (act.lat && act.lng && act.lat !== 0 && act.lng !== 0) {
+              pinnedActivities.push({
+                id: `day${day.day}-${act.name}`,
+                name: act.name,
+                category: act.category || "culture",
+                lat: act.lat,
+                lng: act.lng,
+                description: act.description || "",
+                duration: act.duration,
+              });
             }
+          }
+        }
+
+        // 3. Also fetch nearby recommendations (restaurants, sightseeing) via Geoapify
+        let nearbyPlaces: MapActivity[] = [];
+        if (center) {
+          try {
+            const placesRes = await fetch(
+              `/api/places?lat=${center[0]}&lng=${center[1]}&categories=tourism.sights,tourism.attraction,catering.restaurant&limit=10`
+            );
+            const placesData = placesRes.ok ? await placesRes.json() : [];
+            nearbyPlaces = (Array.isArray(placesData) ? placesData : []).map((p: any) => ({
+              id: p.id || `nearby-${p.name}`,
+              name: p.name,
+              category: p.category || "culture",
+              lat: p.lat,
+              lng: p.lng,
+              description: p.description || "",
+              rating: p.rating,
+              image: p.image,
+              duration: p.duration,
+            }));
+          } catch (e) {
+            console.error("Nearby places fetch error:", e);
           }
         }
 
         if (!isMounted) return;
 
-        // If we found local activities, maybe center map perfectly on the first one
-        if (mappedActivities.length > 0 && !center) {
-          center = [mappedActivities[0].lat, mappedActivities[0].lng];
+        // 4. Combine: itinerary pins first, then nearby recommendations
+        const allActivities = [...pinnedActivities, ...nearbyPlaces];
+
+        // Use first itinerary activity as center if available, else destination center
+        if (pinnedActivities.length > 0 && !center) {
+          center = [pinnedActivities[0].lat, pinnedActivities[0].lng];
         }
 
         if (center) setMapCenter(center);
-        setActivities(mappedActivities);
-
+        setMapActivities(allActivities);
       } catch (error) {
         console.error("Map Region Error:", error);
       } finally {
@@ -113,12 +138,9 @@ export function ItineraryMapRegion({
       }
     }
 
-    fetchMapData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [destination, country, itineraryId]);
+    buildMap();
+    return () => { isMounted = false; };
+  }, [days, destination, country]);
 
   return (
     <div className="relative h-full min-h-[300px] w-full bg-slate-50" data-html2canvas-ignore="true">
@@ -139,20 +161,20 @@ export function ItineraryMapRegion({
       ) : (
         <>
           <ActivityMap
-            activities={activities}
+            activities={mapActivities}
             center={mapCenter}
             onHover={setHoveredActivity}
             onLeave={() => setHoveredActivity(null)}
           />
 
           <div className="absolute top-3 left-3 z-[1000] rounded-xl bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-lg border border-slate-200 backdrop-blur-sm">
-            {activities.length} planned locations mapped
+            {mapActivities.length} locations mapped
           </div>
 
           {hoveredActivity && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[340px] overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="flex gap-4 p-4">
-                {hoveredActivity.image && !hoveredActivity.image.includes("YOUR_KEY") && (
+                {hoveredActivity.image && (
                   <img
                     src={hoveredActivity.image}
                     alt={hoveredActivity.name}
@@ -163,7 +185,19 @@ export function ItineraryMapRegion({
                   <h3 className="font-semibold text-slate-900 text-sm truncate">{hoveredActivity.name}</h3>
                   <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{hoveredActivity.description}</p>
                   <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5">
+                    {hoveredActivity.rating && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+                        <Star className="h-3 w-3 fill-amber-400" />
+                        {hoveredActivity.rating.toFixed(1)}
+                      </span>
+                    )}
+                    {hoveredActivity.duration && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {hoveredActivity.duration} min
+                      </span>
+                    )}
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 capitalize">
                       {hoveredActivity.category}
                     </span>
                   </div>
