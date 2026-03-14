@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
+import { useWishlistStore } from "@/lib/stores/wishlist-store";
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
@@ -82,9 +83,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [recentTrips, setRecentTrips] = useState<SidebarTrip[]>([]);
+  const { newCount, fetchItems, isLoaded } = useWishlistStore();
 
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "";
+
+  useEffect(() => {
+    if (!isLoaded) fetchItems();
+  }, [isLoaded, fetchItems]);
 
   useEffect(() => {
     // Fetch user's recent trips
@@ -152,9 +158,14 @@ export function Sidebar() {
                         "highlighted" in item && item.highlighted && !isActive && "bg-[#FFF7ED] text-[#C2410C] hover:bg-orange-100",
                       )}
                     >
-                      <Link href={item.href}>
+                      <Link href={item.href} className="relative">
                         <Icon className="h-4 w-4" />
                         <span>{item.label}</span>
+                        {item.label === "Wishlist" && newCount > 0 && (
+                          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-sm">
+                            {newCount > 9 ? "9+" : newCount}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
