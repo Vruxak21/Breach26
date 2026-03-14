@@ -12,6 +12,18 @@ export async function GET(request: NextRequest) {
 
     const items = await prisma.wishlistItem.findMany({
       where: { addedByUserId: session.user.id },
+      include: {
+        itinerary: {
+          select: {
+            id: true,
+            title: true,
+            destination: true,
+            country: true,
+            coverImage: true,
+            totalDays: true,
+          },
+        },
+      },
       orderBy: { addedAt: "desc" },
     });
 

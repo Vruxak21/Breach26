@@ -16,21 +16,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const priceEnv = plan === "pro" ? process.env.STRIPE_PRO_PRICE_ID : process.env.STRIPE_BASIC_PRICE_ID;
-    
+    // ── Basic plan is FREE — activate directly, no Stripe ──
+    if (plan === "basic") {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { plan: "basic" },
+      });
+
+      await prisma.subscription.upsert({
+        where: { userId: session.user.id },
+        create: {
+          userId: session.user.id,
+          plan: "basic",
+          status: "active",
+        },
+        update: {
+          plan: "basic",
+          status: "active",
+        },
+      });
+
+      return NextResponse.json({ url: `/dashboard?plan_activated=basic` });
+    }
+
+    // ── Pro plan — Stripe checkout at $10/month ──
+    const priceEnv = process.env.STRIPE_PRO_PRICE_ID;
+
     // Determine if we have a valid Stripe Price ID (starts with price_) or we need to use dynamic price data
     const isPriceId = priceEnv?.startsWith("price_");
-    
+
     const lineItem = isPriceId
       ? { price: priceEnv, quantity: 1 }
       : {
           price_data: {
             currency: "usd",
             product_data: {
-              name: plan === "pro" ? "TravelMind Pro" : "TravelMind Basic",
-              description: plan === "pro" ? "For groups & power planners" : "Perfect for solo travelers",
+              name: "TravelMind Pro",
+              description: "For groups & power planners",
             },
-            unit_amount: plan === "pro" ? 1000 : 500, // $10 or $5 in cents
+            unit_amount: 1000, // $10 in cents
             recurring: { interval: "month" },
           },
           quantity: 1,
@@ -57,16 +81,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
       line_items: [lineItem as any],
       mode: "subscription",
-      success_url: `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/dashboard?plan_activated=${plan}`,
-      cancel_url: `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/choose-plan`,
+      success_url: `${baseUrl}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/choose-plan`,
       metadata: {
         userId: session.user.id,
-        plan,
+        plan: "pro",
       },
     });
 

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   UserPlus,
-  Share2,
   MapPin,
   Receipt,
   Clock,
@@ -15,6 +14,7 @@ import {
   X,
   Send,
   Check,
+  Lock,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,7 +24,6 @@ import { GroupChat } from "@/components/chat/GroupChat";
 import { useSession } from "@/lib/auth-client";
 import { downloadPdf } from "@/lib/pdf-service";
 import { Download } from "lucide-react";
-import { GroupVoting } from "@/components/itinerary/GroupVoting";
 import { TripCalendar } from "@/components/itinerary/TripCalendar";
 import { TripTimeline } from "@/components/itinerary/TripTimeline";
 import { ItineraryMapRegion } from "@/components/itinerary/ItineraryMapRegion";
@@ -44,6 +43,7 @@ export default function ViewItineraryPage() {
   const [inviteStatus, setInviteStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [activeView, setActiveView] = useState<"timeline" | "calendar">("timeline");
+  const [userPlan, setUserPlan] = useState<"basic" | "pro">("basic");
 
   useEffect(() => {
     fetch(`/api/itinerary/${id}`)
@@ -60,6 +60,14 @@ export default function ViewItineraryPage() {
       });
   }, [id, router]);
 
+  // Fetch user plan
+  useEffect(() => {
+    fetch("/api/user/plan")
+      .then((res) => (res.ok ? res.json() : { plan: "basic" }))
+      .then((data) => setUserPlan(data.plan || "basic"))
+      .catch(() => {});
+  }, []);
+
   if (isLoading || !trip) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -72,6 +80,8 @@ export default function ViewItineraryPage() {
   const spent =
     days.reduce((acc: number, day: any) => acc + (day.totalCost || 0), 0) ||
     trip.totalBudget;
+
+  const isPro = userPlan === "pro";
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -140,32 +150,49 @@ export default function ViewItineraryPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 text-sm font-medium">
-            <button
-              onClick={() => setIsInviteOpen(true)}
-              data-html2canvas-ignore="true"
-              className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-white backdrop-blur-md transition-colors hover:bg-white/20 border border-white/20"
-            >
-              <UserPlus className="size-4" />
-              Invite
-            </button>
+            {/* Invite — Pro only */}
+            {isPro ? (
+              <button
+                onClick={() => setIsInviteOpen(true)}
+                data-html2canvas-ignore="true"
+                className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-white backdrop-blur-md transition-colors hover:bg-white/20 border border-white/20"
+              >
+                <UserPlus className="size-4" />
+                Invite
+              </button>
+            ) : (
+              <Link
+                href="/choose-plan"
+                data-html2canvas-ignore="true"
+                className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-white/50 backdrop-blur-md border border-white/10 cursor-pointer"
+              >
+                <Lock className="size-3.5" />
+                Invite
+              </Link>
+            )}
 
-            <button
-              onClick={() => setIsChatOpen(true)}
-              data-html2canvas-ignore="true"
-              className="flex items-center gap-2 rounded-xl bg-indigo-600/90 px-4 py-2 text-white backdrop-blur-md transition-colors hover:bg-indigo-500 border border-indigo-500/50 shadow-lg shadow-indigo-500/20"
-            >
-              <MessageCircle className="size-4" />
-              Group Chat
-            </button>
+            {/* Group Chat — Pro only */}
+            {isPro ? (
+              <button
+                onClick={() => setIsChatOpen(true)}
+                data-html2canvas-ignore="true"
+                className="flex items-center gap-2 rounded-xl bg-indigo-600/90 px-4 py-2 text-white backdrop-blur-md transition-colors hover:bg-indigo-500 border border-indigo-500/50 shadow-lg shadow-indigo-500/20"
+              >
+                <MessageCircle className="size-4" />
+                Group Chat
+              </button>
+            ) : (
+              <Link
+                href="/choose-plan"
+                data-html2canvas-ignore="true"
+                className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-white/50 backdrop-blur-md border border-white/10 cursor-pointer"
+              >
+                <Lock className="size-3.5" />
+                Group Chat
+              </Link>
+            )}
 
-            <button 
-              data-html2canvas-ignore="true"
-              className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-white backdrop-blur-md transition-colors hover:bg-white/20 border border-white/20"
-            >
-              <Share2 className="size-4" />
-              Share
-            </button>
-
+            {/* Download PDF — always available */}
             {activeView === "timeline" && (
               <button
                 onClick={handleDownloadPdf}
@@ -230,67 +257,58 @@ export default function ViewItineraryPage() {
           </div>
         </div>
 
-        {/* MAIN CONTENT WORKSPACE */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* LEFT COLUMN: Calendar & Timeline */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* View Toggle */}
-            <div className="flex w-full items-center justify-center sm:justify-start">
-              <div 
-                className="flex rounded-xl bg-slate-100 p-1" 
-                data-html2canvas-ignore="true"
+        {/* MAIN CONTENT — Full Width (no polls sidebar) */}
+        <div className="space-y-6">
+          {/* View Toggle */}
+          <div className="flex w-full items-center justify-center sm:justify-start">
+            <div 
+              className="flex rounded-xl bg-slate-100 p-1" 
+              data-html2canvas-ignore="true"
+            >
+              <button
+                onClick={() => setActiveView("timeline")}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  activeView === "timeline"
+                    ? "bg-white text-indigo-600 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                }`}
               >
-                <button
-                  onClick={() => setActiveView("timeline")}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                    activeView === "timeline"
-                      ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
-                  }`}
-                >
-                  <MapPin className="size-4" />
-                  Timeline
-                </button>
-                <button
-                  onClick={() => setActiveView("calendar")}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                    activeView === "calendar"
-                      ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
-                  }`}
-                >
-                  <Calendar className="size-4" />
-                  Calendar
-                </button>
-              </div>
-            </div>
-
-            {activeView === "calendar" ? (
-              <TripCalendar itineraryId={id as string} />
-            ) : (
-              <TripTimeline days={days} />
-            )}
-          </div>
-
-          {/* RIGHT COLUMN: Interactive Panel (Polls) */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-2xl border border-[#E8E8E2] bg-white p-6 shadow-sm">
-              <GroupVoting itineraryId={id as string} currentUserId={session?.user?.id || ""} />
+                <MapPin className="size-4" />
+                Timeline
+              </button>
+              <button
+                onClick={() => setActiveView("calendar")}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  activeView === "calendar"
+                    ? "bg-white text-indigo-600 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                }`}
+              >
+                <Calendar className="size-4" />
+                Calendar
+              </button>
             </div>
           </div>
+
+          {activeView === "calendar" ? (
+            <TripCalendar itineraryId={id as string} days={days} />
+          ) : (
+            <TripTimeline days={days} />
+          )}
         </div>
       </div>
 
-      {/* GroupChat Slide-over */}
-      <GroupChat
-        itineraryId={id as string}
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-      />
+      {/* GroupChat Slide-over — only render for pro */}
+      {isPro && (
+        <GroupChat
+          itineraryId={id as string}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
 
-      {/* Invite Modal */}
-      {isInviteOpen && (
+      {/* Invite Modal — only render for pro */}
+      {isPro && isInviteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl mx-4">
             <div className="flex items-center justify-between mb-5">

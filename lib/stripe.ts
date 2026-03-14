@@ -11,7 +11,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 export const PLANS = {
   basic: {
     name: "Basic",
-    price: 5,
+    price: 0,
     priceId: process.env.STRIPE_BASIC_PRICE_ID!,
     features: [
       "AI-powered itinerary generation",

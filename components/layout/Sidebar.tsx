@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Lock,
   LogOut,
+  MessageCircle,
   Map,
   Plane,
   Search,
@@ -115,7 +116,7 @@ export function Sidebar() {
     fetch("/api/user/plan")
       .then((res) => (res.ok ? res.json() : { plan: "basic" }))
       .then((data) => setUserPlan(data.plan || "basic"))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleSignOut = async () => {
@@ -187,7 +188,7 @@ export function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Collaboration - Pro only */}
+        {/* Chat - Pro only */}
         <SidebarGroup>
           <SidebarGroupLabel className="px-2 text-xs font-semibold tracking-[0.16em] text-[#9CA3AF]">
             COLLABORATE
@@ -206,14 +207,14 @@ export function Sidebar() {
                   disabled={userPlan !== "pro"}
                 >
                   {userPlan === "pro" ? (
-                    <Link href="/collaboration">
-                      <Users className="h-4 w-4" />
-                      <span>Collaboration</span>
+                    <Link href="/chat">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Chat</span>
                     </Link>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>Collaboration</span>
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Chat</span>
                       <Lock className="ml-auto h-3 w-3 text-slate-300" />
                     </div>
                   )}

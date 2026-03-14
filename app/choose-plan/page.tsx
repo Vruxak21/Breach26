@@ -26,7 +26,7 @@ const plans = [
   {
     id: "basic" as const,
     name: "Basic",
-    price: 5,
+    price: 0,
     tagline: "Perfect for solo travelers",
     icon: Zap,
     gradient: "from-blue-500 to-cyan-500",
@@ -98,9 +98,15 @@ export default function ChoosePlanPage() {
 
       if (!res.ok) throw new Error("Failed to create checkout session");
 
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
+      const data = await res.json();
+      if (data.url) {
+        // For basic (free) plan, the API returns a local redirect URL
+        // For pro plan, it returns a Stripe checkout URL
+        if (plan === "basic") {
+          router.push(data.url);
+        } else {
+          window.location.href = data.url;
+        }
       }
     } catch (err) {
       console.error("Checkout error:", err);
@@ -145,6 +151,7 @@ export default function ChoosePlanPage() {
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isLoading = loading === plan.id;
+            const isFree = plan.price === 0;
 
             return (
               <motion.div
@@ -178,8 +185,14 @@ export default function ChoosePlanPage() {
 
                   {/* Price */}
                   <div className="mb-8 flex items-baseline gap-1">
-                    <span className="text-4xl font-extrabold text-slate-900">${plan.price}</span>
-                    <span className="text-sm font-medium text-slate-400">/month</span>
+                    {isFree ? (
+                      <span className="text-4xl font-extrabold text-emerald-600">Free</span>
+                    ) : (
+                      <>
+                        <span className="text-4xl font-extrabold text-slate-900">${plan.price}</span>
+                        <span className="text-sm font-medium text-slate-400">/month</span>
+                      </>
+                    )}
                   </div>
 
                   {/* Features */}
@@ -228,11 +241,11 @@ export default function ChoosePlanPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Redirecting to payment...
+                        {isFree ? "Activating..." : "Redirecting to payment..."}
                       </>
                     ) : (
                       <>
-                        Get {plan.name}
+                        {isFree ? "Get Started Free" : `Get ${plan.name}`}
                         <Sparkles className="h-4 w-4" />
                       </>
                     )}
