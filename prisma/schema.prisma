@@ -11,16 +11,19 @@ datasource db {
 }
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id                String    @id
+  name              String
+  email             String
+  emailVerified     Boolean   @default(false)
+  image             String?
+  plan              String    @default("basic") // basic | pro
+  stripeCustomerId  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  sessions          Session[]
+  accounts          Account[]
 
+  subscription         Subscription?
   itineraries          Itinerary[]
   wishlistItems        WishlistItem[]
   collaborations       ItineraryCollaborator[]
@@ -85,6 +88,23 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 String    @default("basic") // basic | pro
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  status               String    @default("active") // active | canceled | past_due
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("subscription")
 }
 
 // ─── Domain Models ───────────────────────────────────────────

@@ -52,7 +52,70 @@ export async function POST(request: NextRequest) {
     const currency = currencyRes.status === "fulfilled" && currencyRes.value.ok
       ? await currencyRes.value.json() : { rate: 1 };
 
-    // Step 3: Extract user preferences from description
+    // Step 3: Fetch user's wishlisted hotels and flights for hybrid recommendations
+    let wishlistContext = "";
+    try {
+      const wishlistItems = await prisma.wishlistItem.findMany({
+        where: {
+          addedByUserId: session.user.id,
+          type: { in: ["hotel", "flight"] },
+        },
+        orderBy: { addedAt: "desc" },
+        take: 10,
+      });
+
+      if (wishlistItems.length > 0) {
+        const wishlistHotels = wishlistItems
+          .filter((w) => w.type === "hotel")
+          .map((w) => {
+            const d = typeof w.data === "string" ? JSON.parse(w.data) : w.data;
+            return `- ${d.name || "Hotel"} (${d.city || ""}${d.country ? `, ${d.country}` : ""}) — Rating: ${d.rating || "N/A"}, Price: ${d.pricePerNight || "N/A"}/night`;
+          });
+
+        const wishlistFlights = wishlistItems
+          .filter((w) => w.type === "flight")
+          .map((w) => {
+            const d = typeof w.data === "string" ? JSON.parse(w.data) : w.data;
+            const airline = typeof d.airline === "string" ? d.airline : d.airline?.name || "Airline";
+            return `- ${airline}: ${d.departure?.iata || "?"} → ${d.arrival?.iata || "?"} (${d.departure?.scheduled ? d.departure.scheduled.slice(0, 10) : "N/A"})`;
+          });
+
+        if (wishlistHotels.length > 0) {
+          wishlistContext += `\nUser's Wishlisted Hotels (PRIORITIZE these for accommodation):\n${wishlistHotels.join("\n")}`;
+        }
+        if (wishlistFlights.length > 0) {
+          wishlistContext += `\nUser's Wishlisted Flights (INCORPORATE into travel plans):\n${wishlistFlights.join("\n")}`;
+        }
+      }
+    } catch (e) {
+      console.error("Wishlist fetch error (non-fatal):", e);
+    }
+
+    // Step 4: Fetch user interaction ratings for hybrid recommendations
+    let ratingsContext = "";
+    try {
+      const highRatedInteractions = await prisma.userInteraction.findMany({
+        where: {
+          userId: session.user.id,
+          action: { in: ["rate", "favorite"] },
+          score: { gte: 4 },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
+
+      if (highRatedInteractions.length > 0) {
+        const ratedItems = highRatedInteractions.map((i) => {
+          const meta = typeof i.metadata === "string" ? JSON.parse(i.metadata) : i.metadata;
+          return `- ${(meta as any)?.name || i.itemId} (${i.itemType}, rated ${i.score}/5)`;
+        });
+        ratingsContext = `\nUser's Highly Rated Items:\n${ratedItems.join("\n")}`;
+      }
+    } catch (e) {
+      console.error("Ratings fetch error (non-fatal):", e);
+    }
+
+    // Step 5: Extract user preferences from description
     let userPrefsString = "";
     try {
       const { extractPreferences, preferencesToPromptString } = await import("@/lib/preference-extractor");
@@ -61,7 +124,7 @@ export async function POST(request: NextRequest) {
       // Extract preferences from the user's free-text description
       if (intent.description) {
         const extractedPrefs = await extractPreferences(
-          `Trip to ${intent.destination}. ${intent.description}. Interests: ${intent.interests?.join(", ") || "general"}. Style: ${intent.travelStyle || "relaxed"}.`
+          `Trip to ${intent.destination}. ${intent.description}. Style: ${intent.travelStyle || "from description"}.`
         );
 
         // Store extracted preferences in Pinecone for future trips
@@ -85,14 +148,14 @@ export async function POST(request: NextRequest) {
       console.error("Preference extraction error (non-fatal):", e);
     }
 
-    // Step 4: Get RAG knowledge context
+    // Step 6: Get RAG knowledge context (semantic search)
     let ragContext = "";
     try {
       const ragRes = await fetch(`${BASE_URL}/api/rag`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: `Travel to ${intent.destination}: ${intent.description || ""}. Interests: ${intent.interests?.join(", ") || "general"}. Budget: ${intent.budget}. Style: ${intent.travelStyle || "relaxed"}`,
+          query: `Travel to ${intent.destination}: ${intent.description || ""}. Budget: ${intent.budget}. Style: ${intent.travelStyle || "from user description"}`,
           userId: session.user.id,
         }),
       });
@@ -108,15 +171,24 @@ export async function POST(request: NextRequest) {
       (new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000
     ) + 1);
 
-    // Step 5: Build enriched prompt with full context
+    // Step 7: Build enriched hybrid recommendation prompt
     const topPlaces = places.slice(0, 8).map((p: any) => `${p.name} (${p.category})`).join(", ");
 
     const prompt = `Generate a ${totalDays}-day itinerary for ${intent.destination} (${startDate} to ${endDate}).
-Budget: ${intent.budget || 50000} ${intent.currency || "INR"}, ${intent.travelers || 2} travelers, ${intent.travelStyle || "relaxed"} style.
-${intent.description ? `User Notes: ${intent.description}` : ""}
+Budget: ${intent.budget || 50000} ${intent.currency || "INR"}, ${intent.travelers || 2} travelers, ${intent.travelStyle || "balanced"} style.
+${intent.description ? `User's Trip Description (EXTRACT travel style, interests, number of travelers, currency, and all preferences from this): ${intent.description}` : ""}
 ${topPlaces ? `Nearby places of interest: ${topPlaces}` : ""}
-${userPrefsString ? `\nUser Preferences (PRIORITIZE THESE):\n${userPrefsString}` : ""}
-${ragContext ? `\nTravel Knowledge & Recommendations:\n${ragContext.slice(0, 600)}` : ""}
+${wishlistContext ? `\n--- WISHLISTED ITEMS (MUST prioritize these) ---${wishlistContext}` : ""}
+${ratingsContext ? `\n--- USER RATINGS (consider these preferences) ---${ratingsContext}` : ""}
+${userPrefsString ? `\n--- STORED USER PREFERENCES ---\n${userPrefsString}` : ""}
+${ragContext ? `\n--- TRAVEL KNOWLEDGE & RECOMMENDATIONS ---\n${ragContext.slice(0, 600)}` : ""}
+
+IMPORTANT INSTRUCTIONS:
+1. Extract travel style, interests, number of travelers and currency from the user's description if not explicitly provided.
+2. PRIORITIZE wishlisted hotels for accommodation and wishlisted flights for travel.
+3. Consider user's highly rated items and stored preferences for activity suggestions.
+4. Use RAG travel knowledge for local tips and hidden gems.
+
 Return ONLY a JSON array. Each element: {"day":1,"date":"YYYY-MM-DD","title":"...","activities":[{"name":"...","description":"...","time":"HH:MM","duration":60,"category":"culture","estimatedCost":500,"lat":0.0,"lng":0.0}]}
 Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's preferences above all else.`;
 
@@ -154,7 +226,7 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's
       console.warn("All models exhausted — using fallback itinerary from places data");
     }
 
-    // Step 5: Parse response
+    // Step 8: Parse response
     let days: any[] = [];
     if (content) {
       try {
@@ -168,7 +240,7 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's
       days = buildFallbackDays(totalDays, startDate, places);
     }
 
-    // Step 6: Save to database
+    // Step 9: Save to database
     const itinerary = await prisma.itinerary.create({
       data: {
         userId: session.user.id,
@@ -181,13 +253,14 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's
         totalBudget: intent.budget || 50000,
         currency: intent.currency || "INR",
         travelers: intent.travelers || 2,
-        travelStyle: intent.travelStyle || "relaxed",
+        travelStyle: intent.travelStyle || "balanced",
         days: days,
         shareToken: generateShareToken(),
         status: "draft",
       },
     });
-    // Step 7: Auto-ingest the new trip into Pinecone for future RAG enrichment
+
+    // Step 10: Auto-ingest the new trip into Pinecone for future RAG enrichment
     try {
       const { ingestItinerary } = await import("@/lib/dynamic-ingestion");
       // Fire-and-forget: don't block the response
@@ -196,7 +269,7 @@ Include 3-4 activities per day. Mix sightseeing, food, leisure. Honor the user's
         destination: intent.destination,
         country: cityInfo.country || location.displayName?.split(",").pop()?.trim() || "",
         totalDays,
-        travelStyle: intent.travelStyle || "relaxed",
+        travelStyle: intent.travelStyle || "balanced",
         totalBudget: intent.budget || 50000,
         currency: intent.currency || "INR",
         travelers: intent.travelers || 2,

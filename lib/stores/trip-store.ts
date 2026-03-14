@@ -4,12 +4,13 @@ interface TripIntent {
   destination: string;
   description: string;
   budget: number;
-  currency: string;
   startDate: string;
   endDate: string;
-  travelers: number;
-  travelStyle: string;
-  interests: string[];
+  // These are now optional — extracted from description by AI
+  currency?: string;
+  travelers?: number;
+  travelStyle?: string;
+  interests?: string[];
 }
 
 interface GeneratedItinerary {
