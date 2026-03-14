@@ -11,6 +11,7 @@ This template is optimized for **hackathons, rapid prototyping, and production s
 * [Overview](#overview)
 * [Features](#features)
 * [Technology Stack](#technology-stack)
+* [Entity Relation Diagram](#ER Diagram)
 * [Project Structure](#project-structure)
 * [Getting Started](#getting-started)
 * [Environment Variables](#environment-variables)
@@ -158,7 +159,13 @@ The goal of this template is to provide a **scalable base architecture** for app
 - **Framer Motion**: Smooth, high-performance interactions and transitions.|
 
 ---
+# System Architecture
 
+
+
+# ER Diagram
+
+![ER Diagram](https://raw.githubusercontent.com/Vruxak21/Breach26/4f43e137a600c20391696436ed1d2f3c4663c700/assests/er_diagram.png)
 # Project Structure
 
 ```
