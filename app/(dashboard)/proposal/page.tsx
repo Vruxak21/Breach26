@@ -18,16 +18,74 @@ import {
   Plane,
   Star,
   Clock,
+  Heart,
+  CheckCircle2,
 } from "lucide-react";
 import { useTripStore } from "@/lib/stores/trip-store";
+import { useWishlistStore } from "@/lib/stores/wishlist-store";
+
+// Map common city/destination names to their IATA airport codes
+function getCityIataCode(destination: string): string {
+  const cityMap: Record<string, string> = {
+    // India
+    "ahmedabad": "AMD", "mumbai": "BOM", "delhi": "DEL", "new delhi": "DEL",
+    "bangalore": "BLR", "bengaluru": "BLR", "chennai": "MAA", "kolkata": "CCU",
+    "hyderabad": "HYD", "pune": "PNQ", "jaipur": "JAI", "goa": "GOI",
+    "lucknow": "LKO", "kochi": "COK", "cochin": "COK", "thiruvananthapuram": "TRV",
+    "varanasi": "VNS", "srinagar": "SXR", "udaipur": "UDR", "jodhpur": "JDH",
+    "amritsar": "ATQ", "patna": "PAT", "bhopal": "BHO", "indore": "IDR",
+    "chandigarh": "IXC", "nagpur": "NAG", "coimbatore": "CJB", "mangalore": "IXE",
+    // International Asia
+    "dubai": "DXB", "abu dhabi": "AUH", "singapore": "SIN", "bangkok": "BKK",
+    "kuala lumpur": "KUL", "tokyo": "NRT", "seoul": "ICN", "hong kong": "HKG",
+    "shanghai": "PVG", "beijing": "PEK", "bali": "DPS", "jakarta": "CGK",
+    "manila": "MNL", "hanoi": "HAN", "colombo": "CMB", "kathmandu": "KTM",
+    "dhaka": "DAC", "doha": "DOH", "muscat": "MCT", "riyadh": "RUH",
+    // Europe
+    "london": "LHR", "paris": "CDG", "amsterdam": "AMS", "frankfurt": "FRA",
+    "munich": "MUC", "zurich": "ZRH", "geneva": "GVA", "rome": "FCO",
+    "milan": "MXP", "barcelona": "BCN", "madrid": "MAD", "lisbon": "LIS",
+    "vienna": "VIE", "prague": "PRG", "istanbul": "IST", "athens": "ATH",
+    "berlin": "BER", "brussels": "BRU", "dublin": "DUB", "helsinki": "HEL",
+    "oslo": "OSL", "stockholm": "ARN", "copenhagen": "CPH", "warsaw": "WAW",
+    // Americas
+    "new york": "JFK", "los angeles": "LAX", "san francisco": "SFO",
+    "chicago": "ORD", "miami": "MIA", "toronto": "YYZ", "vancouver": "YVR",
+    "sao paulo": "GRU", "mexico city": "MEX",
+    // Oceania / Africa
+    "sydney": "SYD", "melbourne": "MEL", "auckland": "AKL",
+    "cairo": "CAI", "nairobi": "NBO", "johannesburg": "JNB",
+    // Regions / tourism names
+    "swiss alps": "ZRH", "switzerland": "ZRH", "maldives": "MLE",
+    "mauritius": "MRU", "seychelles": "SEZ", "phuket": "HKT",
+  };
+
+  const key = destination.toLowerCase().trim();
+  if (cityMap[key]) return cityMap[key];
+
+  // Try partial matching (if destination contains a known city name)
+  for (const [city, code] of Object.entries(cityMap)) {
+    if (key.includes(city) || city.includes(key)) return code;
+  }
+
+  // Fallback: take first 3 characters  
+  return destination.slice(0, 3).toUpperCase();
+}
 
 export default function ProposalPage() {
   const router = useRouter();
   const { generatedItinerary, isGenerating } = useTripStore();
+  const { addItem, isInWishlist, fetchItems, isLoaded } = useWishlistStore();
   const [saving, setSaving] = useState(false);
   const [hotels, setHotels] = useState<any[]>([]);
   const [flights, setFlights] = useState<any[]>([]);
   const [loadingExtras, setLoadingExtras] = useState(false);
+  const [wishlistedIds, setWishlistedIds] = useState<Set<string>>(new Set());
+  const [addingId, setAddingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded) fetchItems();
+  }, [isLoaded, fetchItems]);
 
   useEffect(() => {
     if (!generatedItinerary && !isGenerating) {
@@ -43,29 +101,90 @@ export default function ProposalPage() {
     const itin = generatedItinerary;
     const fetchExtras = async () => {
       try {
-        // Fetch hotels
+        // Fetch hotels — using correct param names: destination, checkin, checkout
         const hotelRes = await fetch(
-          `/api/hotels?city=${encodeURIComponent(itin.destination)}&checkin=${itin.startDate || ""}&checkout=${itin.endDate || ""}&guests=${itin.travelers || 2}`
+          `/api/hotels?destination=${encodeURIComponent(itin.destination)}&checkin=${itin.startDate || ""}&checkout=${itin.endDate || ""}&guests=${itin.travelers || 2}&currency=${itin.currency || "USD"}`
         );
         if (hotelRes.ok) {
           const d = await hotelRes.json();
-          setHotels(Array.isArray(d) ? d.slice(0, 4) : []);
+          setHotels(Array.isArray(d) ? d.slice(0, 6) : []);
         }
       } catch {}
       try {
-        // Fetch flights
+        // Fetch flights — using correct param names: dep_iata, arr_iata, date
+        const destCode = getCityIataCode(itin.destination || "");
         const flightRes = await fetch(
-          `/api/flights?dep=DEL&arr=${encodeURIComponent(itin.destination?.slice(0, 3)?.toUpperCase() || "")}&date=${itin.startDate || ""}`
+          `/api/flights?dep_iata=DEL&arr_iata=${encodeURIComponent(destCode)}&date=${itin.startDate || ""}`
         );
         if (flightRes.ok) {
           const d = await flightRes.json();
-          setFlights(Array.isArray(d) ? d.slice(0, 4) : []);
+          setFlights(Array.isArray(d) ? d.slice(0, 6) : []);
         }
       } catch {}
       setLoadingExtras(false);
     };
     fetchExtras();
   }, [generatedItinerary]);
+
+  // Sync wishlisted state
+  useEffect(() => {
+    if (!isLoaded) return;
+    const ids = new Set<string>();
+    hotels.forEach((h) => {
+      if (isInWishlist(h.externalId || h.id)) ids.add(h.externalId || h.id);
+    });
+    flights.forEach((f) => {
+      const fId = f.flightNumber || f.flight?.iata || "";
+      if (fId && isInWishlist(fId)) ids.add(fId);
+    });
+    setWishlistedIds(ids);
+  }, [isLoaded, hotels, flights, isInWishlist]);
+
+  const handleAddHotelWishlist = async (hotel: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const extId = hotel.externalId || hotel.id;
+    if (wishlistedIds.has(extId) || addingId) return;
+    setAddingId(extId);
+    const result = await addItem(
+      "hotel",
+      {
+        name: hotel.name,
+        city: hotel.city,
+        country: hotel.country,
+        rating: hotel.rating || hotel.stars,
+        pricePerNight: hotel.pricePerNight,
+        currency: hotel.currency,
+        images: hotel.images,
+        image: hotel.images?.[0],
+      },
+      extId,
+      generatedItinerary?.id
+    );
+    if (result) setWishlistedIds((prev) => new Set(prev).add(extId));
+    setAddingId(null);
+  };
+
+  const handleAddFlightWishlist = async (flight: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const fId = flight.flightNumber || flight.flight?.iata || "";
+    if (!fId || wishlistedIds.has(fId) || addingId) return;
+    setAddingId(fId);
+    const result = await addItem(
+      "flight",
+      {
+        name: `${flight.airline || "Airline"} ${fId}`,
+        airline: flight.airline,
+        flightNumber: fId,
+        departure: flight.departure,
+        arrival: flight.arrival,
+        status: flight.status,
+      },
+      fId,
+      generatedItinerary?.id
+    );
+    if (result) setWishlistedIds((prev) => new Set(prev).add(fId));
+    setAddingId(null);
+  };
 
   if (isGenerating || !generatedItinerary) {
     return (
@@ -229,35 +348,60 @@ export default function ProposalPage() {
             <span className="text-sm">Finding hotels...</span>
           </div>
         ) : hotels.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {hotels.map((hotel: any, i: number) => (
-              <div key={i} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
-                <div className="h-32 w-full bg-slate-100 overflow-hidden">
-                  <img
-                    src={hotel.image || hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80"}
-                    alt={hotel.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h4 className="font-semibold text-slate-900 text-sm">{hotel.name}</h4>
-                  {hotel.address && (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-                      <MapPin className="h-3 w-3" /> {hotel.address}
-                    </p>
-                  )}
-                  <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-xs text-amber-600">
-                      <Star className="h-3 w-3 fill-amber-400" />
-                      {hotel.rating || hotel.starRating || "4.0"}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {hotels.map((hotel: any, i: number) => {
+              const extId = hotel.externalId || hotel.id;
+              const isWishlisted = wishlistedIds.has(extId);
+              const isAdding = addingId === extId;
+              return (
+                <div
+                  key={i}
+                  onClick={() => router.push(`/hotels/${hotel.externalId || hotel.id}`)}
+                  className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg hover:border-indigo-200"
+                >
+                  <div className="h-36 w-full bg-slate-100 overflow-hidden">
+                    <img
+                      src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80"}
+                      alt={hotel.name}
+                      className="h-full w-full object-cover transition group-hover:scale-105"
+                    />
+                  </div>
+                  {/* Wishlist Button */}
+                  <button
+                    onClick={(e) => handleAddHotelWishlist(hotel, e)}
+                    disabled={isWishlisted || !!addingId}
+                    className={`absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full shadow-md transition ${
+                      isWishlisted
+                        ? "bg-rose-500 text-white"
+                        : "bg-white/90 text-slate-400 hover:text-rose-500 hover:bg-white"
+                    }`}
+                  >
+                    {isAdding ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Heart className={`h-3.5 w-3.5 ${isWishlisted ? "fill-white" : ""}`} />
+                    )}
+                  </button>
+                  <div className="p-4">
+                    <h4 className="font-semibold text-slate-900 text-sm">{hotel.name}</h4>
+                    {(hotel.city || hotel.description) && (
+                      <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 line-clamp-1">
+                        <MapPin className="h-3 w-3 shrink-0" /> {hotel.city || hotel.description}
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-xs text-amber-600">
+                        <Star className="h-3 w-3 fill-amber-400" />
+                        {hotel.rating || hotel.stars || "4.0"}
+                      </div>
+                      <span className="text-sm font-bold text-indigo-600">
+                        {hotel.pricePerNight ? `₹${hotel.pricePerNight}/night` : "View Details →"}
+                      </span>
                     </div>
-                    <span className="text-sm font-bold text-indigo-600">
-                      ₹{hotel.pricePerNight || hotel.min_price || "—"}/night
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-8 text-center">
@@ -280,34 +424,65 @@ export default function ProposalPage() {
           </div>
         ) : flights.length > 0 ? (
           <div className="space-y-3">
-            {flights.map((flight: any, i: number) => (
-              <div key={i} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
-                  <Plane className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {flight.airline?.name || flight.airline || "Airline"}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {flight.departure?.iata || flight.dep_iata || "—"} → {flight.arrival?.iata || flight.arr_iata || "—"}
-                  </p>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {flight.departure?.scheduled?.slice(11, 16) || flight.dep_time || "—"}
-                    </span>
-                    <span>{flight.flight?.iata || flight.flight_iata || ""}</span>
+            {flights.map((flight: any, i: number) => {
+              const fId = flight.flightNumber || flight.flight?.iata || "";
+              const isWishlisted = fId ? wishlistedIds.has(fId) : false;
+              const isAdding = addingId === fId;
+              return (
+                <div
+                  key={i}
+                  onClick={() => {
+                    if (fId) router.push(`/flights/${fId}`);
+                  }}
+                  className={`group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-lg hover:border-indigo-200 ${fId ? "cursor-pointer" : ""}`}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
+                    <Plane className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {flight.airline?.name || flight.airline || "Airline"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {flight.departure?.iata || flight.dep_iata || "—"} → {flight.arrival?.iata || flight.arr_iata || "—"}
+                    </p>
+                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {flight.departure?.scheduled?.slice(11, 16) || flight.dep_time || "—"}
+                      </span>
+                      <span>{fId || ""}</span>
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+                        {flight.status || "Scheduled"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-indigo-600">
+                        {flight.price ? `₹${flight.price}` : "Check"}
+                      </p>
+                    </div>
+                    {/* Wishlist Button */}
+                    <button
+                      onClick={(e) => handleAddFlightWishlist(flight, e)}
+                      disabled={isWishlisted || !!addingId || !fId}
+                      className={`flex h-8 w-8 items-center justify-center rounded-full shadow-sm transition ${
+                        isWishlisted
+                          ? "bg-rose-500 text-white"
+                          : "bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-slate-200"
+                      }`}
+                    >
+                      {isAdding ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Heart className={`h-3.5 w-3.5 ${isWishlisted ? "fill-white" : ""}`} />
+                      )}
+                    </button>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-lg font-bold text-indigo-600">
-                    {flight.price ? `₹${flight.price}` : "Check"}
-                  </p>
-                  <span className="text-[10px] text-slate-400">{flight.status || "Scheduled"}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-8 text-center">

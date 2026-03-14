@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth-client";
 import { useEffect } from "react";
+import { useWishlistStore } from "@/lib/stores/wishlist-store";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -33,6 +34,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session, isPending } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const { newCount } = useWishlistStore();
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -99,11 +101,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <div
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full",
+                    "relative flex h-9 w-9 items-center justify-center rounded-full",
                     isActive ? "bg-indigo-50" : "bg-transparent",
                   )}
                 >
                   <Icon className="h-4 w-4" />
+                  {item.label === "Wishlist" && newCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-white">
+                      {newCount > 9 ? "9+" : newCount}
+                    </span>
+                  )}
                 </div>
                 <span className={cn(isActive ? "opacity-100" : "opacity-80")}>
                   {item.label}
