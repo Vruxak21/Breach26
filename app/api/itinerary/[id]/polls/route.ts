@@ -173,8 +173,8 @@ export async function POST(
         createdAt: Date;
       }>
     >`
-      INSERT INTO poll ("itineraryId", question, "createdBy")
-      VALUES (${id}, ${question}, ${session.user.id})
+      INSERT INTO poll (id, "itineraryId", question, "createdBy")
+      VALUES (gen_random_uuid(), ${id}, ${question}, ${session.user.id})
       RETURNING id, "itineraryId" as "itineraryId", question, "createdBy" as "createdBy", "createdAt" as "createdAt"
     `;
 
@@ -183,8 +183,8 @@ export async function POST(
     const createdOptions = await Promise.all(
       options.map((opt: string) =>
         prisma.$queryRaw<Array<{ id: string; pollId: string; text: string }>>`
-          INSERT INTO poll_option ("pollId", text)
-          VALUES (${poll.id}, ${opt})
+          INSERT INTO poll_option (id, "pollId", text)
+          VALUES (gen_random_uuid(), ${poll.id}, ${opt})
           RETURNING id, "pollId" as "pollId", text
         `
       )

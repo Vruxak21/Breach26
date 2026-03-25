@@ -16,7 +16,7 @@ import { useTripStore } from "@/lib/stores/trip-store";
 
 const examplePrompts = [
   "5 days in Bali with beaches, temples and local food for 2 people, relaxed style",
-  "A romantic week in Paris with museums and fine dining, luxury budget in EUR",
+  "A romantic week in Paris with museums and fine dining, luxury budget",
   "4 days adventure trip in Swiss Alps with hiking, 3 travelers, packed schedule",
   "Cultural exploration of Kyoto, budget-friendly, solo travel, interested in temples and street food",
 ];
@@ -160,12 +160,12 @@ function PlannerContent() {
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700">Budget</label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              INR
               <input
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
-                min={1000}
+                min={100}
                 className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               />
             </div>

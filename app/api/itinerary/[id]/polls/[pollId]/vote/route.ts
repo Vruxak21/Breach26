@@ -48,8 +48,8 @@ export async function POST(
     const upsertedVote = await prisma.$queryRaw<
       Array<{ id: string; pollId: string; optionId: string; userId: string; createdAt: Date }>
     >`
-      INSERT INTO vote ("pollId", "optionId", "userId")
-      VALUES (${pollId}, ${optionId}, ${session.user.id})
+      INSERT INTO vote (id, "pollId", "optionId", "userId")
+      VALUES (gen_random_uuid(), ${pollId}, ${optionId}, ${session.user.id})
       ON CONFLICT ("pollId", "userId")
       DO UPDATE SET "optionId" = EXCLUDED."optionId"
       RETURNING id, "pollId" as "pollId", "optionId" as "optionId", "userId" as "userId", "createdAt" as "createdAt"

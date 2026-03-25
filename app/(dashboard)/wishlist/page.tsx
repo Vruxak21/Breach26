@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Heart,
   Loader2,
@@ -49,6 +50,7 @@ interface TripGroup {
 const typeIcons: Record<string, any> = { hotel: Hotel, activity: MapPin, event: Calendar, flight: Plane };
 
 export default function WishlistPage() {
+  const router = useRouter();
   const { items, isLoaded, fetchItems, removeItem, resetNewCount } = useWishlistStore();
   const [expandedTrips, setExpandedTrips] = useState<Set<string>>(new Set());
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -234,10 +236,21 @@ export default function WishlistPage() {
                         const isHotel = item.type === "hotel";
                         const isFlight = item.type === "flight";
 
+                        const handleCardClick = () => {
+                          if (isFlight) {
+                            const flightId = item.externalId || data.flightNumber || data.flightIata;
+                            if (flightId) router.push(`/flights/${flightId}`);
+                          } else if (isHotel) {
+                            const hotelId = item.externalId || data.hotelId || data.id;
+                            if (hotelId) router.push(`/hotels/${hotelId}`);
+                          }
+                        };
+
                         return (
                           <div
                             key={item.id}
-                            className="group overflow-hidden rounded-md border border-(--color-border) bg-white shadow-(--shadow-xs) transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-(--shadow-md)"
+                            onClick={handleCardClick}
+                            className="group cursor-pointer overflow-hidden rounded-md border border-(--color-border) bg-white shadow-(--shadow-xs) transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-(--shadow-md)"
                           >
                             <div className="relative h-32">
                               {isHotel ? (
@@ -264,7 +277,7 @@ export default function WishlistPage() {
                               </span>
 
                               <button
-                                onClick={() => handleRemove(item.id)}
+                                onClick={(e) => { e.stopPropagation(); handleRemove(item.id); }}
                                 disabled={deletingId === item.id}
                                 className="absolute right-2 top-2 rounded-full bg-[rgba(255,255,255,0.93)] p-1.5 text-primary shadow-(--shadow-xs) opacity-0 transition-all duration-150 ease-out group-hover:opacity-100 hover:bg-(--color-sand-light)"
                                 type="button"
